@@ -1,8 +1,9 @@
 {
   "expo": {
-    "name": "mobile-web",
-    "slug": "mobile-web",
+    "name": "application-de-suivi-veterinaire",
+    "slug": "asv-vet",
     "version": "1.0.0",
+    "scheme": "asv",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -24,7 +25,12 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
   }
 }
