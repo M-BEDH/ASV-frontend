@@ -6,19 +6,19 @@ body,
   min-height: 100%;
   width: 100%;
   background: #F9FAFB;
-}
-
-[data-expo-root] {
-  min-height: 100vh;
+  .r-flex-13awgt0 {
+    background-color: transparent !important;
+  }
 }
 
 /* Tablette */
 @media (min-width: 768px) {
   body {
+    width: 80%;
     margin: auto;
     font-size: 15px;
   }
-
+  
   button {
     width: 100%;
   }
@@ -31,7 +31,6 @@ body,
     margin: auto;
     font-size: 14px;
   }
-
 }
 
 /* Grand écran */
