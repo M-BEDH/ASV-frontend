@@ -13,6 +13,7 @@ import {
 import { Link, router } from 'expo-router';
 import { authApi, clinicsApi } from '../../services/api';
 import { Colors } from '../../styles/colors';
+import '../../styles/index.css';
 import type { Clinic, UserRole } from '../../types';
 
 const ROLES: { value: UserRole; label: string }[] = [
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, padding: 24, paddingTop: 48 },
   header: { alignItems: 'center', marginBottom: 24 },
   title: { fontSize: 36, fontWeight: 'bold', color: Colors.primary },
-  subtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 4 },
+  subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: Colors.textSecondary, marginTop: 4 },
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
@@ -256,20 +257,20 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  label: { fontSize: 14, fontWeight: '500', color: Colors.textSecondary, marginBottom: 6, marginTop: 12 },
+  label: { fontSize: 14, fontWeight: '500', color: Colors.textPrimary, marginBottom: 6, marginTop: 12 },
   input: {
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: Colors.textPrimary,
+    color: Colors.textSecondary,
     backgroundColor: Colors.background,
   },
   roleRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   roleBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -291,14 +292,15 @@ const styles = StyleSheet.create({
   pickerItemText: { fontSize: 14, color: Colors.textPrimary },
   pickerItemTextActive: { color: Colors.primary, fontWeight: '600' },
   button: {
+    margin: 'auto',
     backgroundColor: Colors.primary,
     borderRadius: 10,
-    padding: 14,
+    padding: 12,
     alignItems: 'center',
     marginTop: 24,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  buttonText: { color: '#fff', fontWeight: '400', fontSize: 16 },
   errorText: {
     color: Colors.danger,
     backgroundColor: '#FEF2F2',
