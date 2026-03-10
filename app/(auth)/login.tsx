@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  buttonText: { color: '#fff', fontWeight: '400', fontSize: 16 },
   errorText: {
     color: Colors.danger,
     backgroundColor: '#FEF2F2',
