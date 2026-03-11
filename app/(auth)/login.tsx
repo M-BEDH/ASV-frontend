@@ -48,7 +48,8 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Text style={styles.title}>ASV 🐾</Text>
+          <Text style={styles.title}>Suivi Vétérinaire</Text>
+          <Text style={styles.title}>🐾</Text>
           <Text style={styles.subtitle}>Connexion</Text>
         </View>
 
@@ -106,8 +107,8 @@ function makeStyles(colors: any) {
     container: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 48 },
     header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
-    title: { fontSize: 40, fontWeight: 'bold', color: colors.primary, fontFamily: 'Merriweather' },
-    subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 23 },
+    title: { fontSize: 36, fontWeight: 'bold', color: colors.primary, fontFamily: 'Merriweather' },
+    subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 24 },
     card: {
       backgroundColor: colors.surface,
       borderRadius: 16,
