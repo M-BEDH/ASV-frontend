@@ -104,7 +104,7 @@ export default function RegisterScreen() {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <Text style={styles.label}>Nom complet</Text>
-          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Jean Dupont" placeholderTextColor={colors.textMuted} />
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nom Prénom" placeholderTextColor={colors.textMuted} />
 
           <Text style={styles.label}>Email</Text>
           <TextInput
