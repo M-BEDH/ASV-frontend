@@ -1,21 +1,41 @@
 import { Redirect, Tabs } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { Colors } from '../../styles/colors';
-import { View, Text } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
+import { useBreakpoint } from '../../hooks/use-breakpoint';
+import { View, Text, StyleSheet } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import type { ComponentProps } from 'react';
 
-function TabIcon({ emoji, label, focused }: { emoji: string; label: string; focused: boolean }) {
+type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+function TabIcon({
+  name,
+  label,
+  size,
+  focused,
+  isMobile,
+  colors,
+}: {
+  name: IconName;
+  label: string;
+  size: number;
+  focused: boolean;
+  isMobile: boolean;
+  colors: any;
+}) {
+  const color = focused ? colors.primary : colors.textMuted;
   return (
-    <View style={{ alignItems: 'center', paddingTop: 4 }}>
-      <Text style={{ fontSize: 18 }}>{emoji}</Text>
-      <Text style={{ fontSize: 10, color: focused ? Colors.primary : Colors.textMuted, marginTop: 2 }}>
-        {label}
-      </Text>
+    <View style={{ alignItems: 'center', paddingVertical: isMobile ? 0 : 5 }}>
+      <MaterialCommunityIcons name={name} size={size} color={color} />
+      {!isMobile && <Text style={{ fontSize: 10, color, marginTop: 2 }}>{label}</Text>}
     </View>
   );
 }
 
 export default function TabsLayout() {
- const { user, loading, isClient } = useAuth();
+  const { user, loading, isClient } = useAuth();
+  const { colors } = useTheme();
+  const { isMobile } = useBreakpoint();
 
   if (loading) return null;
   if (!user) return <Redirect href="/(auth)/login" />;
@@ -25,40 +45,49 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
-          height: 64,
-          paddingBottom: 8,
+          backgroundColor: colors.surface,
+          borderTopWidth: 0,
+          shadowOpacity: 0,
+          elevation: 0,
+          height: isMobile ? 60 : 70,
         },
+        tabBarBackground: () => (
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.surface }]} />
+        ),
         tabBarShowLabel: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📅" label="Agenda" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="home" label="Home" size={isMobile ? 24 : 26} focused={focused} isMobile={isMobile} colors={colors} />
+          ),
         }}
       />
       <Tabs.Screen
         name="animaux"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🐾" label="Animaux" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="paw" label="Animaux" size={isMobile ? 22 : 24} focused={focused} isMobile={isMobile} colors={colors} />
+          ),
         }}
       />
       <Tabs.Screen
         name="proprietaires"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="👤" label={isClient ? 'Profil' : 'Propriétaires'} focused={focused} />
+            <TabIcon name="account-multiple-outline" label="Propriétaires" size={isMobile ? 24 : 26} focused={focused} isMobile={isMobile} colors={colors} />
           ),
         }}
       />
       <Tabs.Screen
         name="consultations"
         options={{
-          // Les clients ne voient pas l'onglet Consultations
           href: isClient ? null : undefined,
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📋" label="Consultations" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="view-dashboard-outline" label="Consultations" size={isMobile ? 22 : 24} focused={focused} isMobile={isMobile} colors={colors} />
+          ),
         }}
       />
     </Tabs>
