@@ -10,10 +10,13 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Platform,
 } from 'react-native';
+import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { ownersApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../context/ThemeContext';
+import AppHeader from '../../components/AppHeader';
 import type { Owner } from '../../types';
 
 type FormData = {
@@ -27,7 +30,9 @@ type FormData = {
 const EMPTY_FORM: FormData = { nom: '', prenom: '', adresse: '', telephone: '', email: '' };
 
 export default function ProprietairesScreen() {
-  const { isVet, isClient } = useAuth();
+  const { user, isVet, isClient } = useAuth();
+  const { colors } = useTheme();
+  const { listPadding, isMobile } = useBreakpoint();
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -53,7 +58,7 @@ export default function ProprietairesScreen() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, email: isClient ? (user?.email ?? '') : '' });
     setError('');
     setModalVisible(true);
   };
@@ -127,24 +132,24 @@ export default function ProprietairesScreen() {
     );
   });
 
-  // Titre et sous-titre selon le rôle
-  const screenTitle = isClient ? '👤 Mon profil' : '👤 Propriétaires';
+  const styles = makeStyles(colors);
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{screenTitle}</Text>
-        {isVet && (
-          <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
-            <Text style={styles.addBtnText}>+ Ajouter</Text>
-          </TouchableOpacity>
-        )}
-        {isClient && owners.length === 0 && (
-          <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
-            <Text style={styles.addBtnText}>Créer mon profil</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      <AppHeader
+        title={isClient ? 'Mon profil' : 'Propriétaires'}
+        right={
+          isVet ? (
+            <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
+              <Text style={styles.addBtnText}>+ Ajouter</Text>
+            </TouchableOpacity>
+          ) : isClient && owners.length === 0 ? (
+            <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
+              <Text style={styles.addBtnText}>Créer mon profil</Text>
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       {isVet && (
         <View style={styles.searchRow}>
@@ -153,17 +158,18 @@ export default function ProprietairesScreen() {
             value={search}
             onChangeText={setSearch}
             placeholder="Rechercher..."
+            placeholderTextColor={colors.textMuted}
             clearButtonMode="while-editing"
           />
         </View>
       )}
 
       <ScrollView
-        style={styles.list}
+        style={[styles.list, { paddingHorizontal: listPadding }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />}
       >
         {loading ? (
-          <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
         ) : filtered.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
@@ -206,16 +212,16 @@ export default function ProprietairesScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Text style={styles.label}>Nom *</Text>
-            <TextInput style={styles.input} value={form.nom} onChangeText={(v) => setForm({ ...form, nom: v })} placeholder="Dupont" />
+            <TextInput style={styles.input} value={form.nom} onChangeText={(v) => setForm({ ...form, nom: v })} placeholder="Dupont" placeholderTextColor={colors.textMuted} />
 
             <Text style={styles.label}>Prénom *</Text>
-            <TextInput style={styles.input} value={form.prenom} onChangeText={(v) => setForm({ ...form, prenom: v })} placeholder="Jean" />
+            <TextInput style={styles.input} value={form.prenom} onChangeText={(v) => setForm({ ...form, prenom: v })} placeholder="Jean" placeholderTextColor={colors.textMuted} />
 
             <Text style={styles.label}>Téléphone</Text>
-            <TextInput style={styles.input} value={form.telephone} onChangeText={(v) => setForm({ ...form, telephone: v })} placeholder="06 12 34 56 78" keyboardType="phone-pad" />
+            <TextInput style={styles.input} value={form.telephone} onChangeText={(v) => setForm({ ...form, telephone: v })} placeholder="06 12 34 56 78" placeholderTextColor={colors.textMuted} keyboardType="phone-pad" />
 
             <Text style={styles.label}>Email</Text>
-            <TextInput style={styles.input} value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} placeholder="jean@email.com" keyboardType="email-address" autoCapitalize="none" />
+            <TextInput style={styles.input} value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} placeholder="jean@email.com" placeholderTextColor={colors.textMuted} keyboardType="email-address" autoCapitalize="none" />
 
             <Text style={styles.label}>Adresse</Text>
             <TextInput
@@ -224,10 +230,11 @@ export default function ProprietairesScreen() {
               onChangeText={(v) => setForm({ ...form, adresse: v })}
               multiline
               placeholder="12 rue des fleurs, 75001 Paris"
+              placeholderTextColor={colors.textMuted}
             />
 
             <TouchableOpacity
-              style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+              style={[styles.saveBtn, !isMobile && { alignSelf: 'center', width: '25%' }, saving && { opacity: 0.6 }]}
               onPress={handleSave}
               disabled={saving}
             >
@@ -240,57 +247,53 @@ export default function ProprietairesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
-  },
-  title: { fontSize: 20, fontWeight: '800', color: Colors.textPrimary },
-  addBtn: { backgroundColor: Colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  searchRow: { padding: 16, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  searchInput: {
-    backgroundColor: Colors.background, borderWidth: 1, borderColor: Colors.border,
-    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15,
-  },
-  list: { flex: 1, padding: 16 },
-  empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: Colors.textMuted, fontSize: 15 },
-  card: {
-    backgroundColor: Colors.surface, borderRadius: 12, padding: 16, marginBottom: 12,
-    flexDirection: 'row', justifyContent: 'space-between',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
-  },
-  cardLeft: { flex: 1 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  cardInfo: { fontSize: 13, color: Colors.textSecondary, marginTop: 4 },
-  cardActions: { gap: 8, justifyContent: 'center' },
-  editBtn: { padding: 6 },
-  editBtnText: { fontSize: 18 },
-  deleteBtn: { padding: 6 },
-  deleteBtnText: { fontSize: 18 },
-  modal: { flex: 1, backgroundColor: Colors.background },
-  modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 20, paddingTop: 24, backgroundColor: Colors.surface,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
-  },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
-  modalClose: { fontSize: 22, color: Colors.textMuted },
-  modalBody: { flex: 1, padding: 20 },
-  label: { fontSize: 14, fontWeight: '500', color: Colors.textSecondary, marginBottom: 6, marginTop: 14 },
-  input: {
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 10,
-    padding: 12, fontSize: 15, color: Colors.textPrimary, backgroundColor: Colors.surface,
-  },
-  errorText: {
-    color: Colors.danger, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, fontSize: 13, marginBottom: 8,
-  },
-  saveBtn: {
-    backgroundColor: Colors.primary, borderRadius: 10, padding: 14,
-    alignItems: 'center', marginTop: 24, marginBottom: 40,
-  },
-  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-});
+function makeStyles(colors: any) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    addBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+    addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+    searchRow: { padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
+    searchInput: {
+      backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, color: colors.textPrimary,
+    },
+    list: { flex: 1, padding: 16 },
+    empty: { paddingTop: 60 },
+    emptyText: { color: colors.textMuted, fontSize: 15, textAlign: 'center' },
+    card: {
+      backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginBottom: 12,
+      flexDirection: 'row', justifyContent: 'space-between',
+      shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 2, 
+    },
+    cardLeft: { flex: 1 },
+    cardTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+    cardInfo: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
+    cardActions: { gap: 8, justifyContent: 'center' },
+    editBtn: { padding: 6 },
+    editBtnText: { fontSize: 18 },
+    deleteBtn: { padding: 6 },
+    deleteBtnText: { fontSize: 18 },
+    modal: { flex: 1, backgroundColor: colors.background, maxWidth: Platform.OS === 'web' ? 680 : undefined, alignSelf: Platform.OS === 'web' ? 'center' : undefined, width: '100%' },
+    modalHeader: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      padding: 20, paddingTop: 24, backgroundColor: colors.surface,
+      borderBottomWidth: 1, borderBottomColor: colors.border,
+    },
+    modalTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+    modalClose: { fontSize: 22, color: colors.textMuted },
+    modalBody: { flex: 1, padding: 20 },
+    label: { fontSize: 14, fontWeight: '500', color: colors.textSecondary, marginBottom: 6, marginTop: 14 },
+    input: {
+      borderWidth: 1, borderColor: colors.border, borderRadius: 10,
+      padding: 12, fontSize: 15, color: colors.textPrimary, backgroundColor: colors.surface,
+    },
+    errorText: {
+      color: colors.danger, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, fontSize: 13, marginBottom: 8,
+    },
+    saveBtn: {
+      backgroundColor: colors.primary, borderRadius: 10, padding: 14,
+      alignItems: 'center', marginTop: 24, marginBottom: 40,
+    },
+    saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  });
+}

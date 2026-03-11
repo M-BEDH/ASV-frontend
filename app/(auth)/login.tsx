@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function LoginScreen() {
   const { login } = useAuth();
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -38,6 +39,8 @@ export default function LoginScreen() {
     }
   };
 
+  const styles = makeStyles(colors);
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -46,12 +49,10 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>ASV 🐾</Text>
-          <Text style={styles.subtitle}>Application de Suivi Vétérinaire</Text>
+          <Text style={styles.subtitle}>Connexion</Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Connexion</Text>
-
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <Text style={styles.label}>Email</Text>
@@ -60,6 +61,7 @@ export default function LoginScreen() {
             value={email}
             onChangeText={setEmail}
             placeholder="votre@email.com"
+            placeholderTextColor={colors.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -71,6 +73,7 @@ export default function LoginScreen() {
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
+            placeholderTextColor={colors.textMuted}
             secureTextEntry
           />
 
@@ -98,53 +101,55 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { backgroundColor: Colors.background, paddingTop: 50 },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 14, backgroundColor: Colors.background, },
-  header: { alignItems: 'center', marginBottom: 82 },
-  title: { fontSize: 40, fontWeight: 'bold', color: Colors.primary, fontFamily: 'Merriweather', },
-  subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: Colors.textSecondary, marginTop: 23 },
-  card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 24,
-    maxWidth: 860,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardTitle: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '500', color: Colors.textPrimary, marginBottom: 6, marginTop: 12 },
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 15,
-    color: Colors.textSecondary,
-    backgroundColor: Colors.background,
-  },
-  button: {
-    margin: 'auto',
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    padding: 14,
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontWeight: '400', fontSize: 16 },
-  errorText: {
-    color: Colors.danger,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 13,
-    marginBottom: 8,
-  },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
-  footerText: { color: Colors.textSecondary, fontSize: 14 },
-  link: { color: Colors.primaryLink, fontWeight: '600', fontSize: 14 },
-});
+function makeStyles(colors: any) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    scroll: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 48 },
+    header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
+    title: { fontSize: 40, fontWeight: 'bold', color: colors.primary, fontFamily: 'Merriweather' },
+    subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 23 },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: 24,
+      width: '100%',
+      maxWidth: 500,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+    },
+    cardTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 20 },
+    label: { fontSize: 14, fontWeight: '500', color: colors.textPrimary, marginBottom: 6, marginTop: 12 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      padding: 12,
+      fontSize: 15,
+      color: colors.textSecondary,
+      backgroundColor: colors.background,
+    },
+    button: {
+      margin: 'auto',
+      backgroundColor: colors.primary,
+      borderRadius: 10,
+      padding: 14,
+      alignItems: 'center',
+      marginTop: 24,
+    },
+    buttonDisabled: { opacity: 0.6 },
+    buttonText: { color: '#fff', fontWeight: '400', fontSize: 16 },
+    errorText: {
+      color: colors.danger,
+      backgroundColor: '#FEF2F2',
+      borderRadius: 8,
+      padding: 10,
+      fontSize: 13,
+      marginBottom: 8,
+    },
+    footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
+    footerText: { color: colors.textSecondary, fontSize: 14 },
+    link: { color: colors.primaryLink, fontWeight: '600', fontSize: 14 },
+  });
+}

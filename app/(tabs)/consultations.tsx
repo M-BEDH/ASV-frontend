@@ -10,10 +10,15 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Platform,
 } from 'react-native';
+import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { consultationsApi, animalsApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../context/ThemeContext';
+import AppHeader from '../../components/AppHeader';
+import Dropdown from '../../components/Dropdown';
+import DateTimePickerInput from '../../components/DateTimePickerInput';
 import type { Consultation, Animal } from '../../types';
 
 type FormData = {
@@ -34,6 +39,8 @@ const EMPTY_FORM: FormData = {
 
 export default function ConsultationsScreen() {
   const { isVet } = useAuth();
+  const { colors } = useTheme();
+  const { listPadding, isMobile } = useBreakpoint();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +106,7 @@ export default function ConsultationsScreen() {
     try {
       const payload = {
         animalId: form.animalId,
-        dateConsultation: form.dateConsultation,
+        dateConsultation: toIsoDatetime(form.dateConsultation),
         motif: form.motif,
         compteRendu: form.compteRendu || null,
         traitements: form.traitements || null,
@@ -138,16 +145,18 @@ export default function ConsultationsScreen() {
     }) + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const styles = makeStyles(colors);
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>📋 Consultations</Text>
-        {isVet && (
+      <AppHeader
+        title="Consultations"
+        right={isVet ? (
           <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
             <Text style={styles.addBtnText}>+ Ajouter</Text>
           </TouchableOpacity>
-        )}
-      </View>
+        ) : undefined}
+      />
 
       {/* Tabs */}
       <View style={styles.tabs}>
@@ -156,7 +165,7 @@ export default function ConsultationsScreen() {
           onPress={() => setTab('upcoming')}
         >
           <Text style={[styles.tabBtnText, tab === 'upcoming' && styles.tabBtnTextActive]}>
-            À venir ({upcoming.length})
+            {isMobile ? `À venir (${upcoming.length})` : `Consultations à venir (${upcoming.length})`}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -164,17 +173,17 @@ export default function ConsultationsScreen() {
           onPress={() => setTab('past')}
         >
           <Text style={[styles.tabBtnText, tab === 'past' && styles.tabBtnTextActive]}>
-            Passées ({past.length})
+            {isMobile ? `Passées (${past.length})` : `Consultations passées (${past.length})`}
           </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        style={styles.list}
+        style={[styles.list, { paddingHorizontal: listPadding }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />}
       >
         {loading ? (
-          <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
         ) : displayed.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>Aucune consultation</Text>
@@ -221,31 +230,34 @@ export default function ConsultationsScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Text style={styles.label}>Animal *</Text>
-            <ScrollView style={styles.pickerList} nestedScrollEnabled>
-              {animals.map((a) => (
-                <TouchableOpacity
-                  key={a.id}
-                  style={[styles.pickerItem, form.animalId === a.id && styles.pickerItemActive]}
-                  onPress={() => setForm({ ...form, animalId: a.id })}
-                >
-                  <Text style={[styles.pickerItemText, form.animalId === a.id && { color: Colors.primary, fontWeight: '600' }]}>
-                    {a.nom} ({a.espece})
-                    {a.proprietaire ? ` — ${a.proprietaire.prenom} ${a.proprietaire.nom}` : ''}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <Dropdown
+              items={animals.map((a) => ({
+                label: `${a.nom} (${a.espece})${a.proprietaire ? ` — ${a.proprietaire.prenom} ${a.proprietaire.nom}` : ''}`,
+                value: a.id,
+              }))}
+              value={form.animalId}
+              onChange={(v) => setForm({ ...form, animalId: v })}
+              placeholder="Choisir un animal"
+            />
 
-            <Text style={styles.label}>Date et heure * (YYYY-MM-DD HH:MM)</Text>
-            <TextInput
-              style={styles.input}
+            <Text style={styles.label}>Date et heure *</Text>
+            <DateTimePickerInput
               value={form.dateConsultation}
-              onChangeText={(v) => setForm({ ...form, dateConsultation: v })}
-              placeholder="2026-03-15 14:30"
+              onChange={(v) => setForm({ ...form, dateConsultation: v })}
             />
 
             <Text style={styles.label}>Motif *</Text>
-            <TextInput style={styles.input} value={form.motif} onChangeText={(v) => setForm({ ...form, motif: v })} placeholder="Visite annuelle" />
+            <Dropdown
+              items={[
+                { label: 'Vaccin', value: 'Vaccin' },
+                { label: 'Consultation', value: 'Consultation' },
+                { label: 'Urgence', value: 'Urgence' },
+                { label: 'Autre', value: 'Autre' },
+              ]}
+              value={form.motif}
+              onChange={(v) => setForm({ ...form, motif: v })}
+              placeholder="Choisir un motif"
+            />
 
             <Text style={styles.label}>Compte-rendu</Text>
             <TextInput
@@ -254,6 +266,7 @@ export default function ConsultationsScreen() {
               onChangeText={(v) => setForm({ ...form, compteRendu: v })}
               multiline
               placeholder="Résultats de l'examen..."
+              placeholderTextColor={colors.textMuted}
             />
 
             <Text style={styles.label}>Traitements</Text>
@@ -263,10 +276,11 @@ export default function ConsultationsScreen() {
               onChangeText={(v) => setForm({ ...form, traitements: v })}
               multiline
               placeholder="Médicaments prescrits..."
+              placeholderTextColor={colors.textMuted}
             />
 
             <TouchableOpacity
-              style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+              style={[styles.saveBtn, !isMobile && { alignSelf: 'center', width: '25%' }, saving && { opacity: 0.6 }]}
               onPress={handleSave}
               disabled={saving}
             >
@@ -279,59 +293,59 @@ export default function ConsultationsScreen() {
   );
 }
 
+// Date → DD-MM-YYYY HH:MM (affichage)
 function formatDatetimeLocal(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
-  },
-  title: { fontSize: 20, fontWeight: '800', color: Colors.textPrimary },
-  addBtn: { backgroundColor: Colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  tabs: { flexDirection: 'row', backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  tabBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  tabBtnActive: { borderBottomWidth: 2, borderBottomColor: Colors.primary },
-  tabBtnText: { fontSize: 14, color: Colors.textMuted },
-  tabBtnTextActive: { color: Colors.primary, fontWeight: '700' },
-  list: { flex: 1, padding: 16 },
-  empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: Colors.textMuted, fontSize: 15 },
-  card: {
-    backgroundColor: Colors.surface, borderRadius: 12, padding: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
-  },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  cardDate: { fontSize: 13, fontWeight: '600', color: Colors.primary, flex: 1 },
-  cardActions: { flexDirection: 'row', gap: 8 },
-  cardAnimal: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary, marginBottom: 4 },
-  cardMotif: { fontSize: 13, color: Colors.textSecondary, marginBottom: 4 },
-  cardField: { fontSize: 13, color: Colors.textSecondary, marginBottom: 2 },
-  cardVet: { fontSize: 12, color: Colors.primary, marginTop: 6 },
-  modal: { flex: 1, backgroundColor: Colors.background },
-  modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 20, paddingTop: 24, backgroundColor: Colors.surface,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
-  },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
-  modalClose: { fontSize: 22, color: Colors.textMuted },
-  modalBody: { flex: 1, padding: 20 },
-  label: { fontSize: 14, fontWeight: '500', color: Colors.textSecondary, marginBottom: 6, marginTop: 14 },
-  input: {
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 10,
-    padding: 12, fontSize: 15, color: Colors.textPrimary, backgroundColor: Colors.surface,
-  },
-  pickerList: { maxHeight: 140, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, backgroundColor: Colors.surface },
-  pickerItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  pickerItemActive: { backgroundColor: Colors.primaryLight },
-  pickerItemText: { fontSize: 14, color: Colors.textPrimary },
-  errorText: { color: Colors.danger, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, fontSize: 13, marginBottom: 8 },
-  saveBtn: { backgroundColor: Colors.primary, borderRadius: 10, padding: 14, alignItems: 'center', marginTop: 24, marginBottom: 40 },
-  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-});
+// DD-MM-YYYY HH:MM → YYYY-MM-DD HH:MM (API)
+function toIsoDatetime(display: string): string {
+  const [datePart, timePart] = display.split(' ');
+  const [d, m, y] = datePart.split('-');
+  return `${y}-${m}-${d} ${timePart ?? '00:00'}`;
+}
+
+function makeStyles(colors: any) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    addBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+    addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+    tabs: { flexDirection: 'row', backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
+    tabBtn: { flex: 1, paddingVertical: 12, alignItems: 'center' },
+    tabBtnActive: { borderBottomWidth: 2, borderBottomColor: colors.primary },
+    tabBtnText: { fontSize: 14, color: colors.textMuted },
+    tabBtnTextActive: { color: colors.primary, fontWeight: '700' },
+    list: { flex: 1, padding: 16 },
+    empty: { paddingTop: 60 },
+    emptyText: { color: colors.textMuted, fontSize: 15, textAlign: 'center' },
+    card: {
+      backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginBottom: 12,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 2, 
+    },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    cardDate: { fontSize: 13, fontWeight: '600', color: colors.primary, flex: 1 },
+    cardActions: { flexDirection: 'row', gap: 8 },
+    cardAnimal: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+    cardMotif: { fontSize: 13, color: colors.textSecondary, marginBottom: 4 },
+    cardField: { fontSize: 13, color: colors.textSecondary, marginBottom: 2 },
+    cardVet: { fontSize: 12, color: colors.primary, marginTop: 6 },
+    modal: { flex: 1, backgroundColor: colors.background, maxWidth: Platform.OS === 'web' ? 680 : undefined, alignSelf: Platform.OS === 'web' ? 'center' : undefined, width: '100%' },
+    modalHeader: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      padding: 20, paddingTop: 24, backgroundColor: colors.surface,
+      borderBottomWidth: 1, borderBottomColor: colors.border,
+    },
+    modalTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+    modalClose: { fontSize: 22, color: colors.textMuted },
+    modalBody: { flex: 1, padding: 20 },
+    label: { fontSize: 14, fontWeight: '500', color: colors.textSecondary, marginBottom: 6, marginTop: 14 },
+    input: {
+      borderWidth: 1, borderColor: colors.border, borderRadius: 10,
+      padding: 12, fontSize: 15, color: colors.textPrimary, backgroundColor: colors.surface,
+    },
+    errorText: { color: colors.danger, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, fontSize: 13, marginBottom: 8 },
+    saveBtn: { backgroundColor: colors.primary, borderRadius: 10, padding: 14, alignItems: 'center', marginTop: 24, marginBottom: 40 },
+    saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  });
+}

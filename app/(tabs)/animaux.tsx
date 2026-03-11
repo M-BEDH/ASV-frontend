@@ -11,9 +11,12 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { animalsApi, ownersApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../context/ThemeContext';
+import AppHeader from '../../components/AppHeader';
+import Dropdown from '../../components/Dropdown';
 import type { Animal, Owner } from '../../types';
 
 type FormData = {
@@ -28,7 +31,9 @@ type FormData = {
 const EMPTY_FORM: FormData = { nom: '', espece: '', race: '', dateNaissance: '', remarques: '', proprietaireId: '' };
 
 export default function AnimauxScreen() {
-  const { isVet } = useAuth();
+  const { isVet, isClient } = useAuth();
+  const { colors } = useTheme();
+  const { listPadding, isMobile } = useBreakpoint();
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +72,7 @@ export default function AnimauxScreen() {
       nom: animal.nom,
       espece: animal.espece,
       race: animal.race ?? '',
-      dateNaissance: animal.dateNaissance ?? '',
+      dateNaissance: animal.dateNaissance ? toDisplayDate(animal.dateNaissance) : '',
       remarques: animal.remarques ?? '',
       proprietaireId: animal.proprietaire?.id ?? '',
     });
@@ -87,7 +92,7 @@ export default function AnimauxScreen() {
         nom: form.nom,
         espece: form.espece,
         race: form.race || null,
-        dateNaissance: form.dateNaissance || null,
+        dateNaissance: form.dateNaissance ? toIsoDate(form.dateNaissance) : null,
         remarques: form.remarques || null,
         proprietaireId: form.proprietaireId || null,
       };
@@ -133,33 +138,38 @@ export default function AnimauxScreen() {
     );
   });
 
+  const styles = makeStyles(colors);
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>🐾 Animaux</Text>
-        {isVet && (
+      <AppHeader
+        title="Animaux"
+        right={isVet ? (
           <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
             <Text style={styles.addBtnText}>+ Ajouter</Text>
           </TouchableOpacity>
-        )}
-      </View>
+        ) : undefined}
+      />
 
-      <View style={styles.searchRow}>
-        <TextInput
-          style={styles.searchInput}
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Rechercher..."
-          clearButtonMode="while-editing"
-        />
-      </View>
+      {!isClient && (
+        <View style={styles.searchRow}>
+          <TextInput
+            style={styles.searchInput}
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Rechercher..."
+            placeholderTextColor={colors.textMuted}
+            clearButtonMode="while-editing"
+          />
+        </View>
+      )}
 
       <ScrollView
-        style={styles.list}
+        style={[styles.list, { paddingHorizontal: listPadding }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />}
       >
         {loading ? (
-          <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
         ) : filtered.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>Aucun animal trouvé</Text>
@@ -213,37 +223,27 @@ export default function AnimauxScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Text style={styles.label}>Nom *</Text>
-            <TextInput style={styles.input} value={form.nom} onChangeText={(v) => setForm({ ...form, nom: v })} placeholder="Rex" />
+            <TextInput style={styles.input} value={form.nom} onChangeText={(v) => setForm({ ...form, nom: v })} placeholder="Rex" placeholderTextColor={colors.textMuted} />
 
             <Text style={styles.label}>Espèce *</Text>
-            <TextInput style={styles.input} value={form.espece} onChangeText={(v) => setForm({ ...form, espece: v })} placeholder="Chien" />
+            <TextInput style={styles.input} value={form.espece} onChangeText={(v) => setForm({ ...form, espece: v })} placeholder="Chien" placeholderTextColor={colors.textMuted} />
 
             <Text style={styles.label}>Race</Text>
-            <TextInput style={styles.input} value={form.race} onChangeText={(v) => setForm({ ...form, race: v })} placeholder="Labrador" />
+            <TextInput style={styles.input} value={form.race} onChangeText={(v) => setForm({ ...form, race: v })} placeholder="Labrador" placeholderTextColor={colors.textMuted} />
 
-            <Text style={styles.label}>Date de naissance (YYYY-MM-DD)</Text>
-            <TextInput style={styles.input} value={form.dateNaissance} onChangeText={(v) => setForm({ ...form, dateNaissance: v })} placeholder="2020-05-15" />
+            <Text style={styles.label}>Date de naissance (JJ-MM-AAAA)</Text>
+            <TextInput style={styles.input} value={form.dateNaissance} onChangeText={(v) => setForm({ ...form, dateNaissance: v })} placeholder="15-05-2020" placeholderTextColor={colors.textMuted} />
 
             <Text style={styles.label}>Propriétaire</Text>
-            <ScrollView style={styles.pickerList} nestedScrollEnabled>
-              <TouchableOpacity
-                style={[styles.pickerItem, !form.proprietaireId && styles.pickerItemActive]}
-                onPress={() => setForm({ ...form, proprietaireId: '' })}
-              >
-                <Text style={styles.pickerItemText}>— Aucun —</Text>
-              </TouchableOpacity>
-              {owners.map((o) => (
-                <TouchableOpacity
-                  key={o.id}
-                  style={[styles.pickerItem, form.proprietaireId === o.id && styles.pickerItemActive]}
-                  onPress={() => setForm({ ...form, proprietaireId: o.id })}
-                >
-                  <Text style={[styles.pickerItemText, form.proprietaireId === o.id && { color: Colors.primary, fontWeight: '600' }]}>
-                    {o.prenom} {o.nom}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <Dropdown
+              items={[
+                { label: '— Aucun —', value: '' },
+                ...owners.map((o) => ({ label: `${o.prenom} ${o.nom}`, value: o.id })),
+              ]}
+              value={form.proprietaireId}
+              onChange={(v) => setForm({ ...form, proprietaireId: v })}
+              placeholder="Choisir un propriétaire"
+            />
 
             <Text style={styles.label}>Remarques</Text>
             <TextInput
@@ -252,10 +252,11 @@ export default function AnimauxScreen() {
               onChangeText={(v) => setForm({ ...form, remarques: v })}
               multiline
               placeholder="Informations complémentaires..."
+              placeholderTextColor={colors.textMuted}
             />
 
             <TouchableOpacity
-              style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+              style={[styles.saveBtn, !isMobile && { alignSelf: 'center', width: '25%' }, saving && { opacity: 0.6 }]}
               onPress={handleSave}
               disabled={saving}
             >
@@ -268,66 +269,68 @@ export default function AnimauxScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
-  },
-  title: { fontSize: 20, fontWeight: '800', color: Colors.textPrimary },
-  addBtn: { backgroundColor: Colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  searchRow: { padding: 16, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  searchInput: {
-    backgroundColor: Colors.background, borderWidth: 1, borderColor: Colors.border,
-    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15,
-  },
-  list: { flex: 1, padding: 16 },
-  empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: Colors.textMuted, fontSize: 15 },
-  card: {
-    backgroundColor: Colors.surface, borderRadius: 12, padding: 16,
-    marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
-  },
-  cardLeft: { flex: 1 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  cardSub: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
-  cardOwner: { fontSize: 12, color: Colors.primary, marginTop: 4 },
-  cardDate: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
-  cardRemark: { fontSize: 12, color: Colors.textMuted, marginTop: 4, fontStyle: 'italic' },
-  cardActions: { gap: 8, justifyContent: 'center' },
-  editBtn: { padding: 6 },
-  editBtnText: { fontSize: 18 },
-  deleteBtn: { padding: 6 },
-  deleteBtnText: { fontSize: 18 },
-  modal: { flex: 1, backgroundColor: Colors.background },
-  modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 20, paddingTop: 24, backgroundColor: Colors.surface,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
-  },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
-  modalClose: { fontSize: 22, color: Colors.textMuted },
-  modalBody: { flex: 1, padding: 20 },
-  label: { fontSize: 14, fontWeight: '500', color: Colors.textSecondary, marginBottom: 6, marginTop: 14 },
-  input: {
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 10,
-    padding: 12, fontSize: 15, color: Colors.textPrimary, backgroundColor: Colors.surface,
-  },
-  pickerList: {
-    maxHeight: 140, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, backgroundColor: Colors.surface,
-  },
-  pickerItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  pickerItemActive: { backgroundColor: Colors.primaryLight },
-  pickerItemText: { fontSize: 14, color: Colors.textPrimary },
-  errorText: {
-    color: Colors.danger, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, fontSize: 13, marginBottom: 8,
-  },
-  saveBtn: {
-    backgroundColor: Colors.primary, borderRadius: 10, padding: 14,
-    alignItems: 'center', marginTop: 24, marginBottom: 40,
-  },
-  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-});
+// YYYY-MM-DD → DD-MM-YYYY (affichage)
+function toDisplayDate(iso: string): string {
+  const [y, m, d] = iso.split('-');
+  return `${d}-${m}-${y}`;
+}
+
+// DD-MM-YYYY → YYYY-MM-DD (API)
+function toIsoDate(display: string): string {
+  const [d, m, y] = display.split('-');
+  return `${y}-${m}-${d}`;
+}
+
+function makeStyles(colors: any) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    addBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+    addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+    searchRow: { padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
+    searchInput: {
+      backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, color: colors.textPrimary,
+    },
+    list: { flex: 1, padding: 16 },
+    empty: { paddingTop: 60 },
+    emptyText: { color: colors.textMuted, fontSize: 15, textAlign: 'center' },
+    card: {
+      backgroundColor: colors.surface, borderRadius: 12, padding: 16,
+      marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between',
+      shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 2,
+    },
+    cardLeft: { flex: 1 },
+    cardTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+    cardSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    cardOwner: { fontSize: 12, color: colors.primary, marginTop: 4 },
+    cardDate: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+    cardRemark: { fontSize: 12, color: colors.textMuted, marginTop: 4, fontStyle: 'italic' },
+    cardActions: { gap: 8, justifyContent: 'center' },
+    editBtn: { padding: 6 },
+    editBtnText: { fontSize: 18 },
+    deleteBtn: { padding: 6 },
+    deleteBtnText: { fontSize: 18 },
+    modal: { flex: 1, backgroundColor: colors.background },
+    modalHeader: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      padding: 20, paddingTop: 24, backgroundColor: colors.surface,
+      borderBottomWidth: 1, borderBottomColor: colors.border,
+    },
+    modalTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+    modalClose: { fontSize: 22, color: colors.textMuted },
+    modalBody: { flex: 1, padding: 20 },
+    label: { fontSize: 14, fontWeight: '500', color: colors.textSecondary, marginBottom: 6, marginTop: 14 },
+    input: {
+      borderWidth: 1, borderColor: colors.border, borderRadius: 10,
+      padding: 12, fontSize: 15, color: colors.textPrimary, backgroundColor: colors.surface,
+    },
+    errorText: {
+      color: colors.danger, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, fontSize: 13, marginBottom: 8,
+    },
+    saveBtn: {
+      backgroundColor: colors.primary, borderRadius: 10, padding: 14,
+      alignItems: 'center', marginTop: 24, marginBottom: 40,
+    },
+    saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  });
+}
