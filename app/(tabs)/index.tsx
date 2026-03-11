@@ -85,7 +85,7 @@ export default function AgendaScreen() {
       ? grouped[today] ? { [today]: grouped[today] } : {}
       : grouped;
 
-  const sectionLabel = filter === 'today' ? "Aujourd'hui" : 'Agenda';
+  const sectionLabel = filter === 'today' ? "Aujourd'hui" : "Prochains rendez-vous";
 
   const styles = makeStyles(colors);
 
@@ -122,7 +122,7 @@ export default function AgendaScreen() {
               activeOpacity={0.7}
             >
               <Text style={[styles.statNumber, { color: '#052fec' }]}>{consultations.length}</Text>
-              <Text style={styles.statLabel}>RDV À venir</Text>
+              <Text style={styles.statLabel}>À venir</Text>
             </TouchableOpacity>
           </View>
         )}
