@@ -14,7 +14,7 @@ export default function AppHeader({ title, right, badge }: Props) {
 
   const themeBtn = (
     <TouchableOpacity onPress={toggleTheme} style={styles.themeBtn}>
-      <Text style={styles.themeBtnText}>{theme === 'dark' ? '🔆' : '🔅'}</Text>
+      <Text style={styles.themeBtnText}>{theme === 'dark' ? '🔆' : <MaterialCommunityIcons name="weather-night" size={25} />}</Text>
     </TouchableOpacity>
   );
 
@@ -131,10 +131,12 @@ function makeStyles(colors: any) {
       height: 36,
       alignItems: 'center',
       justifyContent: 'center',
+      top: -10,
+      left: -10,
     },
     themeBtnText: { fontSize: 20 },
     badge: {
-      paddingHorizontal: 10,
+      paddingHorizontal: 8,
       paddingVertical: 4,
     },
     badgeText: { fontSize: 12, fontWeight: '600' },
