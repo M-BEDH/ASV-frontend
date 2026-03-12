@@ -10,9 +10,11 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+
 import { Link, router } from 'expo-router';
 import { authApi, clinicsApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Dropdown from '../../components/Dropdown';
 import type { Clinic, UserRole } from '../../types';
 
@@ -34,9 +36,11 @@ export default function RegisterScreen() {
   const [vetOption, setVetOption] = useState<'create' | 'join'>('create');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const isWeb = Platform.OS === 'web';
 
   useEffect(() => {
-    clinicsApi.list().then(setClinics).catch(() => {});
+    clinicsApi.list().then(setClinics).catch(() => { });
   }, []);
 
   const handleRegister = async () => {
@@ -96,7 +100,11 @@ export default function RegisterScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>Suivi Vétérinaire</Text>
-          <Text style={styles.title}>🐾</Text>
+          <View style={styles.iconContainer}>
+            <MaterialCommunityIcons name="paw" size={isWeb ? 45 : 30} color={colors.primary} />
+            <MaterialCommunityIcons name="paw" size={isWeb ? 50 : 35} color={colors.danger} />
+            <MaterialCommunityIcons name="paw" size={isWeb ? 45 : 30} color={colors.paw} />
+          </View>
           <Text style={styles.subtitle}>Créer un compte</Text>
         </View>
 
@@ -241,7 +249,8 @@ function makeStyles(colors: any) {
     container: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 48 },
     header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
-    title: { fontSize: 36, fontWeight: 'bold', color: colors.primary,  fontFamily: 'Merriweather'},
+    title: { fontSize: 36, fontWeight: 'bold', color: colors.primary, fontFamily: 'Merriweather' },
+    iconContainer: { flexDirection: 'row', marginTop: 8 },
     subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 4 },
     card: {
       backgroundColor: colors.surface,

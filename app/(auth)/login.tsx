@@ -10,9 +10,11 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -21,6 +23,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const isWeb = Platform.OS === 'web';
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -49,7 +53,11 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>Suivi Vétérinaire</Text>
-          <Text style={styles.title}>🐾</Text>
+          <View style={styles.iconContainer}>
+            <MaterialCommunityIcons name="paw" size={isWeb ? 45 : 30} color={colors.primary} />
+            <MaterialCommunityIcons name="paw" size={isWeb ? 50 : 35} color={colors.danger} />
+            <MaterialCommunityIcons name="paw" size={isWeb ? 45 : 30} color={colors.paw} />
+          </View>
           <Text style={styles.subtitle}>Connexion</Text>
         </View>
 
@@ -108,6 +116,7 @@ function makeStyles(colors: any) {
     scroll: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 48 },
     header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
     title: { fontSize: 36, fontWeight: 'bold', color: colors.primary, fontFamily: 'Merriweather' },
+    iconContainer: { flexDirection: 'row', marginTop: 8 },
     subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 24 },
     card: {
       backgroundColor: colors.surface,
