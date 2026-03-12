@@ -11,57 +11,36 @@ type Props = {
 export default function AppHeader({ title, right, badge }: Props) {
   const { colors, theme, toggleTheme } = useTheme();
   const styles = makeStyles(colors);
+  const isWeb = Platform.OS === 'web';
 
   const themeBtn = (
     <TouchableOpacity onPress={toggleTheme} style={styles.themeBtn}>
-      <Text style={styles.themeBtnText}>{theme === 'dark' ? '🔆' : <MaterialCommunityIcons name="weather-night" size={25} />}</Text>
+      <Text style={[styles.themeBtnText, { fontSize: isWeb ? 28 : 20 }]}>{theme === 'dark' ? '🔆' : <MaterialCommunityIcons name="weather-night" size={isWeb ? 28 : 23} color={colors.textSecondary}/>}</Text>
     </TouchableOpacity>
   );
 
-  if (Platform.OS !== 'web') {
-    return ( // return for mobile, with title and badge on a separate row below the brand and actions, to save horizontal space
-      <View style={styles.headerMobile}>
-        <View style={styles.topRow}>
-          <View style={styles.brandRow}>
-            <MaterialCommunityIcons name="pulse" size={30} color={colors.primaryLink} />
-            <Text style={styles.brand}>ASV</Text>
-          </View>
-          <View style={styles.actions}>
-            {themeBtn}
-            {right}
-          </View>
+  return (
+    <View style={isWeb ? styles.headerWeb : styles.headerMobile}>
+      <View style={styles.topRow}>
+        <View style={styles.brandRow}>
+          <MaterialCommunityIcons name="pulse" size={isWeb ? 50 : 35} color={colors.primary} />
+          <Text style={[styles.brand, { fontSize: isWeb ? 38 : 22 }]}>ASV</Text>
         </View>
-        {(title || badge) ? (
-          <View style={styles.titleRowMobile}>
-            {title ? <Text style={styles.title}>{title}</Text> : null}
-            {badge && (
-              <View style={[styles.badge, { backgroundColor: badge.bgColor }]}>
-                <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
-              </View>
-            )}
-          </View>
-        ) : null}
+        <View style={[styles.actions, { alignSelf: 'flex-end' }]}>
+          {themeBtn}
+          {right}
+        </View>
       </View>
-    );
-  }
-  return (  // return for web, with title and badge on the same row as the brand and actions, since we have more horizontal space
-    <View style={styles.headerWeb}>
-      <View style={styles.brandRow}>
-        <MaterialCommunityIcons name="pulse" size={40} color={colors.primaryLink} />
-        <Text style={styles.brand}>ASV</Text>
-      </View>
-      <View style={styles.titleRow}>
-        <Text style={styles.title}>{title}</Text>
-        {badge && (
-          <View style={[styles.badge, { backgroundColor: badge.bgColor }]}>
-            <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.actions}>
-        {themeBtn}
-        {right}
-      </View>
+      {(title || badge) ? (
+        <View style={styles.titleRow}>
+          {title ? <Text style={styles.title}>{title}</Text> : null}
+          {badge && (
+            <View style={[styles.badge, { backgroundColor: badge.bgColor }]}>
+              <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+            </View>
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -78,15 +57,13 @@ function makeStyles(colors: any) {
       gap: 6,
     },
     headerWeb: {
-      flexDirection: 'row',
-      alignItems: 'center',
       backgroundColor: colors.surface,
       paddingHorizontal: 100,
-      paddingTop: 20,
+      paddingTop: 10,
       paddingBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-      gap: 12,
+      gap: 6,
     },
     topRow: {
       flexDirection: 'row',
@@ -99,21 +76,14 @@ function makeStyles(colors: any) {
       gap: 6,
     },
     brand: {
-      fontSize: 18,
       fontWeight: '800',
       color: colors.primary,
       fontFamily: 'serif',
     },
     titleRow: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    titleRowMobile: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      gap: 4,
     },
     title: {
       fontSize: 17,
@@ -125,19 +95,19 @@ function makeStyles(colors: any) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
+      bottom: -20,
     },
     themeBtn: {
       width: 36,
       height: 36,
-      alignItems: 'center',
-      justifyContent: 'center',
-      top: -10,
       left: -10,
+      justifyContent: 'center',
     },
     themeBtnText: { fontSize: 20 },
     badge: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 3,
+      borderRadius: 3,
     },
     badgeText: { fontSize: 12, fontWeight: '600' },
   });
