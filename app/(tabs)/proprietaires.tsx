@@ -9,14 +9,15 @@ import {
   Modal,
   ActivityIndicator,
   RefreshControl,
-  Alert,
   Platform,
 } from 'react-native';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { ownersApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useToast } from '../../context/ToastContext';
 import AppHeader from '../../components/AppHeader';
+import ConfirmModal from '../../components/ConfirmModal';
 import type { Owner } from '../../types';
 
 type FormData = {
@@ -29,9 +30,12 @@ type FormData = {
 
 const EMPTY_FORM: FormData = { nom: '', prenom: '', adresse: '', telephone: '', email: '' };
 
+type ConfirmConfig = { title: string; message: string; destructive: boolean; onConfirm: () => void };
+
 export default function ProprietairesScreen() {
   const { user, isVet, isClient } = useAuth();
   const { colors } = useTheme();
+  const { showToast } = useToast();
   const { listPadding, isMobile } = useBreakpoint();
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +46,10 @@ export default function ProprietairesScreen() {
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [confirm, setConfirm] = useState<ConfirmConfig | null>(null);
+
+  const showConfirm = (cfg: ConfirmConfig) => setConfirm(cfg);
+  const hideConfirm = () => setConfirm(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -76,11 +84,8 @@ export default function ProprietairesScreen() {
     setModalVisible(true);
   };
 
-  const handleSave = async () => {
-    if (!form.nom || !form.prenom) {
-      setError('Le nom et le prénom sont obligatoires.');
-      return;
-    }
+  const doSave = async () => {
+    hideConfirm();
     setSaving(true);
     setError('');
     try {
@@ -93,8 +98,10 @@ export default function ProprietairesScreen() {
       };
       if (editTarget) {
         await ownersApi.update(editTarget.id, payload);
+        showToast('Propriétaire modifié avec succès');
       } else {
         await ownersApi.create(payload);
+        showToast('Propriétaire créé avec succès');
       }
       setModalVisible(false);
       fetchData();
@@ -105,18 +112,39 @@ export default function ProprietairesScreen() {
     }
   };
 
+  const handleSave = () => {
+    if (!form.nom || !form.prenom) {
+      setError('Le nom et le prénom sont obligatoires.');
+      return;
+    }
+    if (editTarget) {
+      showConfirm({
+        title: 'Modifier le propriétaire',
+        message: `Confirmer la modification de ${editTarget.prenom} ${editTarget.nom} ?`,
+        destructive: false,
+        onConfirm: doSave,
+      });
+    } else {
+      doSave();
+    }
+  };
+
   const handleDelete = (owner: Owner) => {
-    Alert.alert('Supprimer', `Supprimer ${owner.prenom} ${owner.nom} ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: async () => {
+    showConfirm({
+      title: 'Supprimer',
+      message: `Supprimer ${owner.prenom} ${owner.nom} ?`,
+      destructive: true,
+      onConfirm: async () => {
+        hideConfirm();
+        try {
           await ownersApi.delete(owner.id);
+          showToast('Propriétaire supprimé');
           fetchData();
-        },
+        } catch (e: any) {
+          showToast(e.message || 'Erreur lors de la suppression', 'error');
+        }
       },
-    ]);
+    });
   };
 
   const normalize = (s: string) =>
@@ -199,6 +227,16 @@ export default function ProprietairesScreen() {
           ))
         )}
       </ScrollView>
+
+      <ConfirmModal
+        visible={!!confirm}
+        title={confirm?.title ?? ''}
+        message={confirm?.message ?? ''}
+        destructive={confirm?.destructive ?? false}
+        confirmLabel={confirm?.destructive ? 'Supprimer' : 'Confirmer'}
+        onConfirm={confirm?.onConfirm ?? (() => {})}
+        onCancel={hideConfirm}
+      />
 
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
         <View style={styles.modal}>

@@ -9,14 +9,15 @@ import {
   Modal,
   ActivityIndicator,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { animalsApi, ownersApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useToast } from '../../context/ToastContext';
 import AppHeader from '../../components/AppHeader';
 import Dropdown from '../../components/Dropdown';
+import ConfirmModal from '../../components/ConfirmModal';
 import type { Animal, Owner } from '../../types';
 
 type FormData = {
@@ -30,9 +31,12 @@ type FormData = {
 
 const EMPTY_FORM: FormData = { nom: '', espece: '', race: '', dateNaissance: '', remarques: '', proprietaireId: '' };
 
+type ConfirmConfig = { title: string; message: string; destructive: boolean; onConfirm: () => void };
+
 export default function AnimauxScreen() {
   const { isVet, isClient } = useAuth();
   const { colors } = useTheme();
+  const { showToast } = useToast();
   const { listPadding, isMobile } = useBreakpoint();
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
@@ -44,6 +48,10 @@ export default function AnimauxScreen() {
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [confirm, setConfirm] = useState<ConfirmConfig | null>(null);
+
+  const showConfirm = (cfg: ConfirmConfig) => setConfirm(cfg);
+  const hideConfirm = () => setConfirm(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -80,11 +88,8 @@ export default function AnimauxScreen() {
     setModalVisible(true);
   };
 
-  const handleSave = async () => {
-    if (!form.nom || !form.espece) {
-      setError('Le nom et l\'espèce sont obligatoires.');
-      return;
-    }
+  const doSave = async () => {
+    hideConfirm();
     setSaving(true);
     setError('');
     try {
@@ -98,8 +103,10 @@ export default function AnimauxScreen() {
       };
       if (editTarget) {
         await animalsApi.update(editTarget.id, payload);
+        showToast('Animal modifié avec succès');
       } else {
         await animalsApi.create(payload);
+        showToast('Animal créé avec succès');
       }
       setModalVisible(false);
       fetchData();
@@ -110,18 +117,39 @@ export default function AnimauxScreen() {
     }
   };
 
+  const handleSave = () => {
+    if (!form.nom || !form.espece) {
+      setError('Le nom et l\'espèce sont obligatoires.');
+      return;
+    }
+    if (editTarget) {
+      showConfirm({
+        title: 'Modifier l\'animal',
+        message: `Confirmer la modification de ${editTarget.nom} ?`,
+        destructive: false,
+        onConfirm: doSave,
+      });
+    } else {
+      doSave();
+    }
+  };
+
   const handleDelete = (animal: Animal) => {
-    Alert.alert('Supprimer', `Supprimer ${animal.nom} ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: async () => {
+    showConfirm({
+      title: 'Supprimer',
+      message: `Supprimer ${animal.nom} ?`,
+      destructive: true,
+      onConfirm: async () => {
+        hideConfirm();
+        try {
           await animalsApi.delete(animal.id);
+          showToast('Animal supprimé');
           fetchData();
-        },
+        } catch (e: any) {
+          showToast(e.message || 'Erreur lors de la suppression', 'error');
+        }
       },
-    ]);
+    });
   };
 
   const normalize = (s: string) =>
@@ -208,6 +236,16 @@ export default function AnimauxScreen() {
           ))
         )}
       </ScrollView>
+
+      <ConfirmModal
+        visible={!!confirm}
+        title={confirm?.title ?? ''}
+        message={confirm?.message ?? ''}
+        destructive={confirm?.destructive ?? false}
+        confirmLabel={confirm?.destructive ? 'Supprimer' : 'Confirmer'}
+        onConfirm={confirm?.onConfirm ?? (() => {})}
+        onCancel={hideConfirm}
+      />
 
       {/* Modal création / édition */}
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
