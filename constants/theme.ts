@@ -14,6 +14,7 @@ type ThemeColors = {
   danger: string;
   warning: string;
   background: string;
+  paw: string;
   surface: string;
   border: string;
   textPrimary: string;
@@ -34,7 +35,7 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     danger: '#EF4444',
     warning: '#F59E0B',
     background: '#e9e7e7c5',
-   // surface: '#f5eaabb6',  // a modifier 
+    paw: '#00721d',   
     surface: '#c2e7f89f',
     border: '#E5E7EB',
     textPrimary: '#111827',
@@ -53,6 +54,7 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     danger: '#F87171',
     warning: '#FBBF24',
     background: '#111827',
+    paw: '#ffbb00e8',
     surface: '#1F2937',
     border: '#374151',
     textPrimary: '#F9FAFB',
