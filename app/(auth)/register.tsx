@@ -101,9 +101,9 @@ export default function RegisterScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Suivi Vétérinaire</Text>
           <View style={styles.iconContainer}>
-            <MaterialCommunityIcons name="paw" size={isWeb ? 45 : 30} color={colors.primary} />
-            <MaterialCommunityIcons name="paw" size={isWeb ? 50 : 35} color={colors.danger} />
-            <MaterialCommunityIcons name="paw" size={isWeb ? 45 : 30} color={colors.paw} />
+            <MaterialCommunityIcons name="paw" size={isWeb ? 40 : 30} color={colors.primary} />
+            <MaterialCommunityIcons name="pulse" size={isWeb ? 50 : 40} color={colors.danger} />
+            <MaterialCommunityIcons name="paw" size={isWeb ? 40 : 30} color={colors.paw} />
           </View>
           <Text style={styles.subtitle}>Créer un compte</Text>
         </View>
