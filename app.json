@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "application-de-suivi-veterinaire",
+    "name": "Suivi Vétérinaire",
     "slug": "asv-vet",
     "version": "1.0.0",
     "scheme": "asv",
@@ -25,7 +25,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/asv_icon.png", 
       "bundler": "metro"
     },
     "plugins": [
