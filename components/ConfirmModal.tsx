@@ -20,12 +20,13 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
+  const boxBg = theme === 'light' ? '#ffffff' : colors.surface;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
-        <View style={[styles.box, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={[styles.box, { backgroundColor: boxBg, borderColor: colors.border }]}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
           <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
           <View style={styles.buttons}>
@@ -33,7 +34,7 @@ export default function ConfirmModal({
               <Text style={[styles.btnText, { color: colors.textSecondary }]}>Annuler</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.btn, { backgroundColor: destructive ? colors.danger : colors.primary }]}
+              style={[styles.btn, { backgroundColor: destructive ? colors.danger : colors.primary, borderColor: 'transparent' }]}
               onPress={onConfirm}
             >
               <Text style={[styles.btnText, { color: '#fff' }]}>{confirmLabel}</Text>
