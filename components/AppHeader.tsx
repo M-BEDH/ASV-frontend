@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Image } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -14,7 +14,7 @@ export default function AppHeader({ title, right, badge }: Props) {
   const isWeb = Platform.OS === 'web';
 
   const themeBtn = (
-    <TouchableOpacity onPress={toggleTheme} style={styles.themeBtn}>
+    <TouchableOpacity onPress={toggleTheme} style={[styles.themeBtn, !isWeb && { marginTop: 20, marginLeft: -5 }]}>
       <Text style={[styles.themeBtnText, { fontSize: isWeb ? 28 : 20 }]}>{theme === 'dark' ? '🔆' : <MaterialCommunityIcons name="weather-night" size={isWeb ? 28 : 23} color={colors.textSecondary}/>}</Text>
     </TouchableOpacity>
   );
@@ -23,7 +23,12 @@ export default function AppHeader({ title, right, badge }: Props) {
     <View style={isWeb ? styles.headerWeb : styles.headerMobile}>
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
-          <MaterialCommunityIcons name="pulse" size={isWeb ? 50 : 23} color={colors.primary} />
+          {/* <MaterialCommunityIcons name="pulse" size={isWeb ? 50 : 23} color={colors.primary} /> */}
+            <Image
+                      source={require('../assets/asv_icon.png')}
+                      style={styles.logo}
+                      resizeMode="contain"
+                    />
           <Text style={[styles.brand, { fontSize: isWeb ? 38 : 16 }]}>Suivi Vétérinaire</Text>
         </View>
         <View style={styles.actions}>
@@ -49,7 +54,7 @@ function makeStyles(colors: any) {
   return StyleSheet.create({
     headerMobile: {
       backgroundColor: colors.surface,
-      paddingHorizontal: 20,
+      paddingHorizontal: 15,
       paddingTop: 56,
       paddingBottom: 12,
       borderBottomWidth: 1,
@@ -95,7 +100,7 @@ function makeStyles(colors: any) {
       alignItems: 'center',
       gap:10 ,
       bottom: -35,
-      left: -5,
+      left: -20,
     },
     themeBtn: {
       width: 36,
@@ -108,5 +113,7 @@ function makeStyles(colors: any) {
       borderRadius: 3,
     },
     badgeText: { fontSize: 11, fontWeight: '600' },
+    logo: { width: 50, height: 50, marginTop: 5, marginLeft: -8 },
   });
+  
 }

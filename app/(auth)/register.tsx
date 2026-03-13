@@ -9,12 +9,12 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 
 import { Link, router } from 'expo-router';
 import { authApi, clinicsApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Dropdown from '../../components/Dropdown';
 import type { Clinic, UserRole } from '../../types';
 
@@ -100,11 +100,11 @@ export default function RegisterScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>Suivi Vétérinaire</Text>
-          <View style={styles.iconContainer}>
-            <MaterialCommunityIcons name="paw" size={isWeb ? 40 : 30} color={colors.primary} />
-            <MaterialCommunityIcons name="pulse" size={isWeb ? 50 : 40} color={colors.danger} />
-            <MaterialCommunityIcons name="paw" size={isWeb ? 40 : 30} color={colors.paw} />
-          </View>
+          <Image
+            source={require('../../assets/asv_icon.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.subtitle}>Créer un compte</Text>
         </View>
 
@@ -250,7 +250,7 @@ function makeStyles(colors: any) {
     scroll: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 48 },
     header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
     title: { fontSize: 36, fontWeight: 'bold', color: colors.primary, fontFamily: 'Merriweather' },
-    iconContainer: { flexDirection: 'row', marginTop: 8 },
+    logo: { width: 120, height: 120, marginTop: 12 },
     subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 4 },
     card: {
       backgroundColor: colors.surface,
