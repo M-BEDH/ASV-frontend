@@ -12,7 +12,8 @@ type Props = {
 };
 
 export default function Dropdown({ items, value, onChange, placeholder = 'Sélectionner...' }: Props) {
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
+  const mobileBg = theme === 'light' ? '#ffffff' : colors.surface;
   const [open, setOpen] = useState(false);
 
   if (items.length === 0) return null;
@@ -52,7 +53,7 @@ export default function Dropdown({ items, value, onChange, placeholder = 'Sélec
     <>
       <TouchableOpacity
         onPress={() => setOpen(true)}
-        style={[styles.trigger, { borderColor: colors.border, backgroundColor: '#ffffff' }]}
+        style={[styles.trigger, { borderColor: colors.border, backgroundColor: mobileBg }]}
         activeOpacity={0.7}
       >
         <Text style={{ fontSize: 15, color: selected ? colors.textPrimary : colors.textMuted, flex: 1 }}>
@@ -63,7 +64,7 @@ export default function Dropdown({ items, value, onChange, placeholder = 'Sélec
 
       <Modal visible={open} transparent animationType="fade">
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setOpen(false)}>
-          <View style={[styles.menu, { backgroundColor: '#ffffff', borderColor: colors.border }]}>
+          <View style={[styles.menu, { backgroundColor: mobileBg, borderColor: colors.border }]}>
             <ScrollView bounces={false} style={{ maxHeight: 300 }}>
               {items.map((item) => (
                 <TouchableOpacity
