@@ -14,7 +14,6 @@ type ThemeColors = {
   danger: string;
   warning: string;
   background: string;
-  paw: string;
   surface: string;
   border: string;
   textPrimary: string;
@@ -31,11 +30,10 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     primaryLink: '#0400da',
     primaryLight: '#EFF6FF',
     primaryDark: '#1D4ED8',
-    secondary: '#10B981',
+    secondary: '#088318',
     danger: '#EF4444',
     warning: '#F59E0B',
-    background: '#e9e7e7c5',
-    paw: '#ff9100e8',   
+    background: '#e9e7e7c5',  
     surface: '#c2e7f89f',
     border: '#E5E7EB',
     textPrimary: '#111827',
@@ -43,18 +41,17 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     textMuted: '#9CA3AF',
     roleVet: '#4a82fc',
     roleAssistant: '#9e6af8',
-    roleClient: '#0ff8ae',
+    roleClient: '#0ff8ae'
   },
   dark: {
     primary: '#68acfa',
     primaryLink: '#93C5FD',
     primaryLight: '#1E40AF',
     primaryDark: '#1E40AF',
-    secondary: '#6EE7B7',
+    secondary: '#088318',
     danger: '#F87171',
     warning: '#FBBF24',
     background: '#111827',
-    paw: '#ffbb00e8',
     surface: '#1F2937',
     border: '#374151',
     textPrimary: '#F9FAFB',
