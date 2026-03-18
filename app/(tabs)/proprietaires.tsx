@@ -1,23 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Modal,
-  ActivityIndicator,
-  RefreshControl,
-  Platform,
-} from 'react-native';
+import { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
+import { makeCommonStyles } from '../../styles/common';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { ownersApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { useToast } from '../../context/ToastContext';
+import { useCrud } from '../../hooks/useCrud';
 import AppHeader from '../../components/AppHeader';
 import ConfirmModal from '../../components/ConfirmModal';
+import FormModal from '../../components/FormModal';
 import type { Owner } from '../../types';
 
 type FormData = {
@@ -30,137 +21,75 @@ type FormData = {
 
 const EMPTY_FORM: FormData = { nom: '', prenom: '', adresse: '', telephone: '', email: '' };
 
-type ConfirmConfig = { title: string; message: string; destructive: boolean; onConfirm: () => void };
+const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 export default function ProprietairesScreen() {
   const { user, isVet, isClient } = useAuth();
   const { colors } = useTheme();
-  const { showToast } = useToast();
   const { listPadding, isMobile } = useBreakpoint();
-  const [owners, setOwners] = useState<Owner[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editTarget, setEditTarget] = useState<Owner | null>(null);
-  const [form, setForm] = useState<FormData>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [confirm, setConfirm] = useState<ConfirmConfig | null>(null);
 
-  const showConfirm = (cfg: ConfirmConfig) => setConfirm(cfg);
-  const hideConfirm = () => setConfirm(null);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const data = await ownersApi.list();
-      setOwners(data);
-    } catch {
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchData(); }, []);
-
-  const openCreate = () => {
-    setEditTarget(null);
-    setForm({ ...EMPTY_FORM, email: isClient ? (user?.email ?? '') : '' });
-    setError('');
-    setModalVisible(true);
-  };
-
-  const openEdit = (owner: Owner) => {
-    setEditTarget(owner);
-    setForm({
-      nom: owner.nom,
-      prenom: owner.prenom,
-      adresse: owner.adresse ?? '',
-      telephone: owner.telephone ?? '',
-      email: owner.email ?? '',
-    });
-    setError('');
-    setModalVisible(true);
-  };
-
-  const doSave = async () => {
-    hideConfirm();
-    setSaving(true);
-    setError('');
-    try {
-      const payload = {
-        nom: form.nom,
-        prenom: form.prenom,
-        adresse: form.adresse || null,
-        telephone: form.telephone || null,
-        email: form.email || null,
-      };
-      if (editTarget) {
-        await ownersApi.update(editTarget.id, payload);
-        showToast('Propriétaire modifié avec succès');
-      } else {
-        await ownersApi.create(payload);
-        showToast('Propriétaire créé avec succès');
-      }
-      setModalVisible(false);
-      fetchData();
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSave = () => {
-    if (!form.nom || !form.prenom) {
-      setError('Le nom et le prénom sont obligatoires.');
-      return;
-    }
-    if (editTarget) {
-      showConfirm({
-        title: 'Modifier le propriétaire',
-        message: `Confirmer la modification de ${editTarget.prenom} ${editTarget.nom} ?`,
-        destructive: false,
-        onConfirm: doSave,
-      });
-    } else {
-      doSave();
-    }
-  };
-
-  const handleDelete = (owner: Owner) => {
-    showConfirm({
-      title: 'Supprimer',
-      message: `Supprimer ${owner.prenom} ${owner.nom} ?`,
-      destructive: true,
-      onConfirm: async () => {
-        hideConfirm();
-        try {
-          await ownersApi.delete(owner.id);
-          showToast('Propriétaire supprimé');
-          fetchData();
-        } catch (e: any) {
-          showToast(e.message || 'Erreur lors de la suppression', 'error');
-        }
-      },
-    });
-  };
-
-  const normalize = (s: string) =>
-    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-  const filtered = owners.filter((o) => {
-    const q = normalize(search);
-    return (
-      normalize(o.nom).includes(q) ||
-      normalize(o.prenom).includes(q) ||
-      (o.telephone && o.telephone.includes(q)) ||
-      (o.email && normalize(o.email).includes(q))
-    );
+  const {
+    items: owners,
+    loading,
+    refreshing,
+    setRefreshing,
+    fetchData,
+    modalVisible,
+    setModalVisible,
+    editTarget,
+    form,
+    setForm,
+    saving,
+    error,
+    confirm,
+    hideConfirm,
+    openCreate,
+    openEdit,
+    handleSave,
+    handleDelete,
+  } = useCrud<Owner, FormData>({
+    fetchAll: ownersApi.list,
+    createItem: ownersApi.create,
+    updateItem: ownersApi.update,
+    deleteItem: ownersApi.delete,
+    emptyForm: EMPTY_FORM,
+    toPayload: (f) => ({
+      nom: f.nom,
+      prenom: f.prenom,
+      adresse: f.adresse || null,
+      telephone: f.telephone || null,
+      email: f.email || null,
+    }),
+    itemToForm: (o) => ({
+      nom: o.nom,
+      prenom: o.prenom,
+      adresse: o.adresse ?? '',
+      telephone: o.telephone ?? '',
+      email: o.email ?? '',
+    }),
+    validate: (f) => (!f.nom || !f.prenom ? 'Le nom et le prénom sont obligatoires.' : null),
+    labels: {
+      created: 'Propriétaire créé avec succès',
+      updated: 'Propriétaire modifié avec succès',
+      deleted: 'Propriétaire supprimé',
+      deleteMessage: (o) => `Supprimer ${o.prenom} ${o.nom} ?`,
+    },
   });
 
-  const styles = makeStyles(colors);
+  const filtered = owners
+    .filter((o) => {
+      const n = normalize(search);
+      return (
+        normalize(o.nom).includes(n) ||
+        normalize(o.prenom).includes(n) ||
+        (o.telephone && o.telephone.includes(n)) ||
+        (o.email && normalize(o.email).includes(n))
+      );
+    })
+    .sort((a, b) => normalize(a.nom).localeCompare(normalize(b.nom)));
+
+  const styles = makeStyles(colors, isMobile);
 
   return (
     <View style={styles.container}>
@@ -168,11 +97,11 @@ export default function ProprietairesScreen() {
         title={isClient ? 'Mon profil' : 'Propriétaires'}
         right={
           isVet ? (
-            <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
+            <TouchableOpacity style={styles.addBtn} onPress={() => openCreate()}>
               <Text style={styles.addBtnText}>+ Ajouter</Text>
             </TouchableOpacity>
           ) : isClient && owners.length === 0 ? (
-            <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
+            <TouchableOpacity style={styles.addBtn} onPress={() => openCreate({ email: user?.email ?? '' })}>
               <Text style={styles.addBtnText}>Créer mon profil</Text>
             </TouchableOpacity>
           ) : undefined
@@ -208,10 +137,16 @@ export default function ProprietairesScreen() {
           filtered.map((o) => (
             <View key={o.id} style={styles.card}>
               <View style={styles.cardLeft}>
-                <Text style={styles.cardTitle}>{o.prenom} {o.nom}</Text>
-                {o.telephone && <Text style={styles.cardInfo}>📞 {o.telephone}</Text>}
-                {o.email && <Text style={styles.cardInfo}>✉️ {o.email}</Text>}
-                {o.adresse && <Text style={styles.cardInfo}>📍 {o.adresse}</Text>}
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardTitle}>{o.prenom} {o.nom}</Text>
+                  {o.telephone && <Text style={styles.cardInfo}>{isMobile ? '' : '📞 '}{o.telephone}</Text>}
+                </View>
+                {(o.email || o.adresse) && (
+                  <View style={styles.cardRow}>
+                    {o.email && <Text style={styles.cardInfo}>✉️ {o.email}</Text>}
+                    {o.adresse && <Text style={styles.cardInfo} numberOfLines={1}>{isMobile ? '' : '📍 '}{o.adresse}</Text>}
+                  </View>
+                )}
               </View>
               <View style={styles.cardActions}>
                 <TouchableOpacity onPress={() => openEdit(o)} style={styles.editBtn}>
@@ -233,105 +168,77 @@ export default function ProprietairesScreen() {
         title={confirm?.title ?? ''}
         message={confirm?.message ?? ''}
         destructive={confirm?.destructive ?? false}
-        confirmLabel={confirm?.destructive ? 'Supprimer' : 'Confirmer'}
+        confirmLabel="Supprimer"
         onConfirm={confirm?.onConfirm ?? (() => {})}
         onCancel={hideConfirm}
       />
 
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
-        <View style={styles.modal}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{editTarget ? 'Modifier' : 'Nouveau propriétaire'}</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalClose}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      <FormModal
+        visible={modalVisible}
+        title={editTarget ? 'Modifier' : 'Nouveau propriétaire'}
+        onClose={() => setModalVisible(false)}
+        onSave={handleSave}
+        saving={saving}
+        error={error}
+      >
+        <Text style={styles.label}>Nom *</Text>
+        <TextInput
+          style={styles.input}
+          value={form.nom}
+          onChangeText={(v) => setForm({ ...form, nom: v })}
+          placeholder="Nom"
+          placeholderTextColor={colors.textMuted}
+        />
 
-            <Text style={styles.label}>Nom *</Text>
-            <TextInput style={styles.input} value={form.nom} onChangeText={(v) => setForm({ ...form, nom: v })} placeholder="Dupont" placeholderTextColor={colors.textMuted} />
+        <Text style={styles.label}>Prénom *</Text>
+        <TextInput
+          style={styles.input}
+          value={form.prenom}
+          onChangeText={(v) => setForm({ ...form, prenom: v })}
+          placeholder="Prénom"
+          placeholderTextColor={colors.textMuted}
+        />
 
-            <Text style={styles.label}>Prénom *</Text>
-            <TextInput style={styles.input} value={form.prenom} onChangeText={(v) => setForm({ ...form, prenom: v })} placeholder="Jean" placeholderTextColor={colors.textMuted} />
+        <Text style={styles.label}>Téléphone</Text>
+        <TextInput
+          style={styles.input}
+          value={form.telephone}
+          onChangeText={(v) => setForm({ ...form, telephone: v })}
+          placeholder="06 12 34 56 78"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="phone-pad"
+        />
 
-            <Text style={styles.label}>Téléphone</Text>
-            <TextInput style={styles.input} value={form.telephone} onChangeText={(v) => setForm({ ...form, telephone: v })} placeholder="06 12 34 56 78" placeholderTextColor={colors.textMuted} keyboardType="phone-pad" />
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          value={form.email}
+          onChangeText={(v) => setForm({ ...form, email: v })}
+          placeholder="votre@email.com"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
 
-            <Text style={styles.label}>Email</Text>
-            <TextInput style={styles.input} value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} placeholder="jean@email.com" placeholderTextColor={colors.textMuted} keyboardType="email-address" autoCapitalize="none" />
-
-            <Text style={styles.label}>Adresse</Text>
-            <TextInput
-              style={[styles.input, { height: 80 }]}
-              value={form.adresse}
-              onChangeText={(v) => setForm({ ...form, adresse: v })}
-              multiline
-              placeholder="12 rue des fleurs, 75001 Paris"
-              placeholderTextColor={colors.textMuted}
-            />
-
-            <TouchableOpacity
-              style={[styles.saveBtn, !isMobile && { alignSelf: 'center', width: '25%' }, saving && { opacity: 0.6 }]}
-              onPress={handleSave}
-              disabled={saving}
-            >
-              {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Enregistrer</Text>}
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      </Modal>
+        <Text style={styles.label}>Adresse</Text>
+        <TextInput
+          style={[styles.input, { height: 80 }]}
+          value={form.adresse}
+          onChangeText={(v) => setForm({ ...form, adresse: v })}
+          multiline
+          placeholder="Adresse"
+          placeholderTextColor={colors.textMuted}
+        />
+      </FormModal>
     </View>
   );
 }
 
-function makeStyles(colors: any) {
+function makeStyles(colors: any, isMobile: boolean) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    addBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-    addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-    searchRow: { padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
-    searchInput: {
-      backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
-      borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, color: colors.textPrimary,
-    },
-    list: { flex: 1, padding: 16 },
-    empty: { paddingTop: 60 },
-    emptyText: { color: colors.textMuted, fontSize: 15, textAlign: 'center' },
-    card: {
-      backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginBottom: 12,
-      flexDirection: 'row', justifyContent: 'space-between',
-      shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 2, 
-    },
-    cardLeft: { flex: 1 },
-    cardTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
-    cardInfo: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
-    cardActions: { gap: 8, justifyContent: 'center' },
-    editBtn: { padding: 6 },
-    editBtnText: { fontSize: 18 },
-    deleteBtn: { padding: 6 },
-    deleteBtnText: { fontSize: 18 },
-    modal: { flex: 1, backgroundColor: colors.background, maxWidth: Platform.OS === 'web' ? 680 : undefined, alignSelf: Platform.OS === 'web' ? 'center' : undefined, width: '100%' },
-    modalHeader: {
-      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-      padding: 20, paddingTop: 24, backgroundColor: colors.surface,
-      borderBottomWidth: 1, borderBottomColor: colors.border,
-    },
-    modalTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
-    modalClose: { fontSize: 22, color: colors.textMuted },
-    modalBody: { flex: 1, padding: 20 },
-    label: { fontSize: 14, fontWeight: '500', color: colors.textSecondary, marginBottom: 6, marginTop: 14 },
-    input: {
-      borderWidth: 1, borderColor: colors.border, borderRadius: 10,
-      padding: 12, fontSize: 15, color: colors.textPrimary, backgroundColor: colors.surface,
-    },
-    errorText: {
-      color: colors.danger, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, fontSize: 13, marginBottom: 8,
-    },
-    saveBtn: {
-      backgroundColor: colors.primary, borderRadius: 10, padding: 14,
-      alignItems: 'center', marginTop: 24, marginBottom: 40,
-    },
-    saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    ...makeCommonStyles(colors, isMobile),
+    cardLeft: { flex: 1, gap: 4 },
+    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
+    cardInfo: { fontSize: 13, color: colors.textSecondary },
   });
 }
