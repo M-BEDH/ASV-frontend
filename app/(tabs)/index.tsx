@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -13,12 +14,13 @@ import { useTheme } from '../../context/ThemeContext';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { consultationsApi } from '../../services/api';
 import AppHeader from '../../components/AppHeader';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { Consultation } from '../../types';
 
 export default function AgendaScreen() {
   const { user, logout, isVet } = useAuth();
-  const { colors } = useTheme();
-  const { listPadding } = useBreakpoint();
+  const { colors, theme } = useTheme();
+  const { listPadding, isMobile } = useBreakpoint();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -45,9 +47,9 @@ export default function AgendaScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
+
+  useFocusEffect(useCallback(() => { fetchData(); }, []));
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -87,13 +89,14 @@ export default function AgendaScreen() {
 
   const sectionLabel = filter === 'today' ? "Aujourd'hui" : "Prochains rendez-vous";
 
-  const styles = makeStyles(colors);
+  const styles = makeStyles(colors, theme);
 
   return (
     <View style={styles.container}>
       <AppHeader
         title={`${user?.name ?? ''}`}
         badge={{ label: roleLabel(user?.role), bgColor: roleBgColor(user?.role, colors), color: '#ffffff' }}
+        clinicName={user?.clinicName ?? undefined}
         right={
           <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
             <Text style={styles.logoutText}>Déconnexion</Text>
@@ -163,16 +166,32 @@ export default function AgendaScreen() {
                     <View style={styles.consultTime}>
                       <Text style={styles.consultTimeText}>{formatTime(c.dateConsultation)}</Text>
                     </View>
-                    <View style={styles.consultInfo}>
-                      <Text style={styles.consultAnimal}>
-                        {c.animal?.nom ?? '—'}{' '}
-                        <Text style={styles.consultEspece}>({c.animal?.espece ?? ''})</Text>
-                      </Text>
-                      <Text style={styles.consultMotif}>{c.motif}</Text>
-                      {isVet && c.veterinaire && (
-                        <Text style={styles.consultVet}>Dr {c.veterinaire.name}</Text>
-                      )}
-                    </View>
+                    {isMobile ? (
+                      <View style={styles.consultInfo}>
+                        <Text style={styles.consultAnimal}>
+                          {c.animal?.nom ?? '—'}{' '}
+                          <Text style={styles.consultEspece}>({c.animal?.espece ?? ''})</Text>
+                        </Text>
+                        <Text style={styles.consultMotif}>{c.motif}</Text>
+                        {isVet && c.veterinaire && (
+                          <Text style={{ fontSize: 12, color: colors.primary }}>Dr {c.veterinaire.name}</Text>
+                        )}
+                      </View>
+                    ) : (
+                      <View style={[styles.consultInfo, { flexDirection: 'row', alignItems: 'center', gap: 20, flexWrap: 'wrap' }]}>
+                        <Text style={styles.consultAnimal}>
+                          {c.animal?.nom ?? '—'}{' '}
+                          <Text style={styles.consultEspece}>({c.animal?.espece ?? ''})</Text>
+                        </Text>
+                        <Text style={styles.consultMotif}>{c.motif}</Text>
+                        {isVet && c.veterinaire && (
+                          <View style={styles.consultVet}>
+                            <MaterialCommunityIcons name="stethoscope" size={13} color={colors.primary} />
+                            <Text style={{ fontSize: 12, color: colors.primary }}> Dr {c.veterinaire.name}</Text>
+                          </View>
+                        )}
+                      </View>
+                    )}
                   </View>
                 ))}
               </View>
@@ -196,7 +215,7 @@ function roleBgColor(role?: string | null, colors?: any) {
   return colors?.roleClient ?? '#0ff8ae';
 }
 
-function makeStyles(colors: any) {
+function makeStyles(colors: any, theme: 'light' | 'dark') {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     logoutBtn: {
@@ -236,7 +255,6 @@ function makeStyles(colors: any) {
       paddingHorizontal: 16,
       paddingVertical: 14,
       marginBottom: 8,
-      marginHorizontal: 20,
     },
     dayRowToday: { borderWidth: 2, borderColor: colors.primary },
     dayRowDate: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, textTransform: 'capitalize', flex: 1 },
@@ -265,11 +283,11 @@ function makeStyles(colors: any) {
       borderRadius: 8,
       marginRight: 12,
     },
-    consultTimeText: { fontSize: 13, fontWeight: '700', color: colors.primary },
+    consultTimeText: { fontSize: 13, fontWeight: '700', color: theme === 'dark' ? '#ffffff' : colors.primary },
     consultInfo: { flex: 1 },
     consultAnimal: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
     consultEspece: { fontSize: 13, fontWeight: '400', color: colors.textMuted },
     consultMotif: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-    consultVet: { fontSize: 12, color: colors.primary, marginTop: 4 },
+    consultVet: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   });
 }
