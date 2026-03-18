@@ -16,12 +16,20 @@ import { Link, router } from 'expo-router';
 import { authApi, clinicsApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import Dropdown from '../../components/Dropdown';
-import type { Clinic, UserRole } from '../../types';
+import type { Clinic, EtablissementType, UserRole } from '../../types';
 
 const ROLES: { value: UserRole; label: string }[] = [
   { value: 'veterinaire', label: 'Vétérinaire' },
+  { value: 'responsable', label: 'Responsable / Directeur' },
   { value: 'assistant', label: 'Assistant(e)' },
+  { value: 'benevole', label: 'Bénévole' },
   { value: 'client', label: 'Client' },
+];
+
+const ETABLISSEMENT_TYPES: { value: EtablissementType; label: string }[] = [
+  { value: 'clinique', label: 'Clinique' },
+  { value: 'refuge', label: 'Refuge' },
+  { value: 'association', label: 'Association' },
 ];
 
 export default function RegisterScreen() {
@@ -33,11 +41,10 @@ export default function RegisterScreen() {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [selectedClinicId, setSelectedClinicId] = useState('');
   const [newClinicName, setNewClinicName] = useState('');
+  const [newClinicType, setNewClinicType] = useState<EtablissementType>('clinique');
   const [vetOption, setVetOption] = useState<'create' | 'join'>('create');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const isWeb = Platform.OS === 'web';
 
   useEffect(() => {
     clinicsApi.list().then(setClinics).catch(() => { });
@@ -54,25 +61,26 @@ export default function RegisterScreen() {
     try {
       const payload: any = { name, email, password, role };
 
-      if (role === 'veterinaire') {
+      if (role === 'veterinaire' || role === 'responsable') {
         if (vetOption === 'create') {
           if (!newClinicName.trim()) {
-            setError('Veuillez saisir un nom de clinique.');
+            setError("Veuillez saisir un nom d'établissement.");
             setLoading(false);
             return;
           }
           payload.clinicName = newClinicName.trim();
+          payload.clinicType = newClinicType;
         } else {
           if (!selectedClinicId) {
-            setError('Veuillez sélectionner une clinique.');
+            setError('Veuillez sélectionner un établissement.');
             setLoading(false);
             return;
           }
           payload.clinicId = selectedClinicId;
         }
-      } else if (role === 'assistant') {
+      } else if (role === 'assistant' || role === 'benevole') {
         if (!selectedClinicId) {
-          setError('Veuillez sélectionner votre clinique.');
+          setError('Veuillez sélectionner votre établissement.');
           setLoading(false);
           return;
         }
@@ -84,7 +92,7 @@ export default function RegisterScreen() {
       await authApi.register(payload);
       router.replace('/(auth)/login');
     } catch (e: any) {
-      setError(e.message || 'Erreur lors de l\'inscription.');
+      setError(e.message || "Erreur lors de l'inscription.");
     } finally {
       setLoading(false);
     }
@@ -137,84 +145,74 @@ export default function RegisterScreen() {
           />
 
           <Text style={styles.label}>Rôle</Text>
-          <View style={styles.roleRow}>
-            {ROLES.map((r) => (
-              <TouchableOpacity
-                key={r.value}
-                style={[styles.roleBtn, role === r.value && styles.roleBtnActive]}
-                onPress={() => setRole(r.value)}
-              >
-                <Text style={[styles.roleBtnText, role === r.value && styles.roleBtnTextActive]}>
-                  {r.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <Dropdown
+            items={ROLES}
+            value={role}
+            onChange={(v) => setRole(v as UserRole)}
+            placeholder="Choisir un rôle"
+          />
 
-          {/* Vétérinaire : créer ou rejoindre une clinique */}
-          {role === 'veterinaire' && (
+          {/* Vétérinaire : créer ou rejoindre un établissement */}
+          {(role === 'veterinaire' || role === 'responsable') && (
             <View style={styles.clinicSection}>
-              <Text style={styles.label}>Clinique</Text>
-              <View style={styles.roleRow}>
-                <TouchableOpacity
-                  style={[styles.roleBtn, vetOption === 'create' && styles.roleBtnActive]}
-                  onPress={() => setVetOption('create')}
-                >
-                  <Text style={[styles.roleBtnText, vetOption === 'create' && styles.roleBtnTextActive]}>
-                    Créer
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.roleBtn, vetOption === 'join' && styles.roleBtnActive]}
-                  onPress={() => setVetOption('join')}
-                >
-                  <Text style={[styles.roleBtnText, vetOption === 'join' && styles.roleBtnTextActive]}>
-                    Rejoindre
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.label}>Établissement</Text>
+              <Dropdown
+                items={[{ value: 'create', label: 'Créer un nouvel établissement' }, { value: 'join', label: 'Rejoindre un établissement existant' }]}
+                value={vetOption}
+                onChange={(v) => setVetOption(v as 'create' | 'join')}
+                placeholder="Créer ou rejoindre ?"
+              />
 
               {vetOption === 'create' ? (
-                <TextInput
-                  style={styles.input}
-                  value={newClinicName}
-                  onChangeText={setNewClinicName}
-                  placeholder="Nom de votre clinique"
-                  placeholderTextColor={colors.textMuted}
-                />
+                <>
+                  <Text style={styles.label}>Type d'établissement</Text>
+                  <Dropdown
+                    items={ETABLISSEMENT_TYPES}
+                    value={newClinicType}
+                    onChange={(v) => setNewClinicType(v as EtablissementType)}
+                    placeholder="Choisir un type"
+                  />
+                  <TextInput
+                    style={[styles.input, { marginTop: 8 }]}
+                    value={newClinicName}
+                    onChangeText={setNewClinicName}
+                    placeholder="Nom de votre établissement"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </>
               ) : (
                 <Dropdown
-                  items={clinics.map((c) => ({ label: c.name, value: c.id }))}
+                  items={clinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
                   value={selectedClinicId}
                   onChange={setSelectedClinicId}
-                  placeholder="Choisir une clinique"
+                  placeholder="Choisir un établissement"
                 />
               )}
             </View>
           )}
 
-          {/* Assistant : doit rejoindre une clinique */}
-          {role === 'assistant' && (
+          {/* Assistant / Bénévole : doit rejoindre un établissement */}
+          {(role === 'assistant' || role === 'benevole') && (
             <View style={styles.clinicSection}>
-              <Text style={styles.label}>Votre clinique *</Text>
+              <Text style={styles.label}>Votre établissement *</Text>
               <Dropdown
-                items={clinics.map((c) => ({ label: c.name, value: c.id }))}
+                items={clinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
                 value={selectedClinicId}
                 onChange={setSelectedClinicId}
-                placeholder="Choisir une clinique"
+                placeholder="Choisir un établissement"
               />
             </View>
           )}
 
-          {/* Client : clinique optionnelle */}
+          {/* Client : établissement optionnel */}
           {role === 'client' && clinics.length > 0 && (
             <View style={styles.clinicSection}>
-              <Text style={styles.label}>Clinique (optionnel)</Text>
+              <Text style={styles.label}>Établissement (optionnel)</Text>
               <Dropdown
-                items={clinics.map((c) => ({ label: c.name, value: c.id }))}
+                items={clinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
                 value={selectedClinicId}
                 onChange={setSelectedClinicId}
-                placeholder="Choisir une clinique"
+                placeholder="Choisir un établissement"
               />
             </View>
           )}
@@ -250,8 +248,8 @@ function makeStyles(colors: any) {
     scroll: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 48 },
     header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
     title: { fontSize: 36, fontWeight: 'bold', color: colors.primary, fontFamily: 'Merriweather' },
-    logo: { width: 120, height: 120, marginTop: 12 },
-    subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+    logo: { width: 100, height: 100, marginTop: 12 },
+    subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 10 },
     card: {
       backgroundColor: colors.surface,
       borderRadius: 16,
@@ -273,18 +271,6 @@ function makeStyles(colors: any) {
       color: colors.textSecondary,
       backgroundColor: colors.background,
     },
-    roleRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-    roleBtn: {
-      paddingHorizontal: 12,
-      paddingVertical: 5,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.background,
-    },
-    roleBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    roleBtnText: { fontSize: 14, color: colors.textSecondary },
-    roleBtnTextActive: { color: '#fff', fontWeight: '600' },
     clinicSection: { marginTop: 4 },
     button: {
       margin: 'auto',
