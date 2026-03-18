@@ -7,8 +7,11 @@ export const API_URL =
   (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080');
 const TOKEN_KEY = 'asv_jwt_token';
 
-// SecureStore n'est pas disponible sur web — on utilise AsyncStorage comme fallback
+// Cache mémoire du token — évite un accès AsyncStorage/SecureStore à chaque requête
+let _tokenCache: string | null = null;
+
 const storeToken = async (token: string) => {
+  _tokenCache = token;
   if (Platform.OS === 'web') {
     await AsyncStorage.setItem(TOKEN_KEY, token);
   } else {
@@ -17,13 +20,16 @@ const storeToken = async (token: string) => {
 };
 
 const getToken = async (): Promise<string | null> => {
-  if (Platform.OS === 'web') {
-    return AsyncStorage.getItem(TOKEN_KEY);
-  }
-  return SecureStore.getItemAsync(TOKEN_KEY);
+  if (_tokenCache !== null) return _tokenCache;
+  const token = Platform.OS === 'web'
+    ? await AsyncStorage.getItem(TOKEN_KEY)
+    : await SecureStore.getItemAsync(TOKEN_KEY);
+  _tokenCache = token;
+  return token;
 };
 
 const removeToken = async () => {
+  _tokenCache = null;
   if (Platform.OS === 'web') {
     await AsyncStorage.removeItem(TOKEN_KEY);
   } else {
@@ -54,11 +60,14 @@ const request = async <T>(
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export const authApi = {
-  login: async (email: string, password: string) => {
-    const data = await request<{ token: string; user: any }>('/api/auth/login', {
+  login: async (email: string, password: string, clinicId?: string) => {
+    const data = await request<any>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, ...(clinicId ? { clinicId } : {}) }),
     });
+    if (data.requiresClinicSelection) {
+      return data as { requiresClinicSelection: true; clinics: { id: string; name: string }[] };
+    }
     await storeToken(data.token);
     return data.user;
   },
@@ -101,6 +110,7 @@ export const animalsApi = {
   create: (data: any) => request<any>('/api/animals', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: any) => request<any>(`/api/animals/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) => request<void>(`/api/animals/${id}`, { method: 'DELETE' }),
+  getConsultations: (id: string) => request<any[]>(`/api/animals/${id}/consultations`),
 };
 
 // ─── Owners ───────────────────────────────────────────────────────────────────
