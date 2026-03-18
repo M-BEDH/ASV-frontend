@@ -65,6 +65,15 @@ export default function TabsLayout() {
           ),
         }}
       />
+       <Tabs.Screen
+        name="consultations"
+        options={{
+          href: isClient ? null : undefined,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="view-dashboard-outline" label="Consultations" size={isMobile ? 22 : 24} focused={focused} isMobile={isMobile} colors={colors} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="animaux"
         options={{
@@ -77,16 +86,14 @@ export default function TabsLayout() {
         name="proprietaires"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="account-multiple-outline" label="Propriétaires" size={isMobile ? 24 : 26} focused={focused} isMobile={isMobile} colors={colors} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="consultations"
-        options={{
-          href: isClient ? null : undefined,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name="view-dashboard-outline" label="Consultations" size={isMobile ? 22 : 24} focused={focused} isMobile={isMobile} colors={colors} />
+            <TabIcon
+              name={isClient ? 'account-outline' : 'account-multiple-outline'}
+              label={isClient ? 'Profil' : 'Propriétaires'}
+              size={isMobile ? 24 : 26}
+              focused={focused}
+              isMobile={isMobile}
+              colors={colors}
+            />
           ),
         }}
       />
