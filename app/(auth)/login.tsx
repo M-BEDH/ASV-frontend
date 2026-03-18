@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { Link, router } from 'expo-router';
+import Dropdown from '../../components/Dropdown';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -23,6 +24,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [clinicChoices, setClinicChoices] = useState<{ id: string; name: string }[] | null>(null);
+  const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
 
   const isWeb = Platform.OS === 'web';
 
@@ -34,8 +37,13 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      await login(email.trim(), password);
-      router.replace('/(tabs)');
+      const result = await login(email.trim(), password, selectedClinicId ?? undefined);
+      if (result?.requiresClinicSelection) {
+        setClinicChoices(result.clinics);
+        setSelectedClinicId(result.clinics[0]?.id ?? null);
+      } else {
+        router.replace('/(tabs)');
+      }
     } catch (e: any) {
       setError(e.message || 'Identifiants invalides.');
     } finally {
@@ -86,6 +94,17 @@ export default function LoginScreen() {
             secureTextEntry
           />
 
+          {clinicChoices && (
+            <>
+              <Text style={styles.label}>Choisissez votre établissement</Text>
+              <Dropdown
+                items={clinicChoices.map(c => ({ label: c.name, value: c.id }))}
+                value={selectedClinicId ?? ''}
+                onChange={setSelectedClinicId}
+              />
+            </>
+          )}
+
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleLogin}
@@ -116,8 +135,8 @@ function makeStyles(colors: any) {
     scroll: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 48 },
     header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
     title: { fontSize: 36, fontWeight: 'bold', color: colors.primary, fontFamily: 'Merriweather' },
-    logo: { width: 120, height: 120, marginTop: 12 },
-    subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 24 },
+    logo: { width: 100, height: 100, marginTop: 12 },
+    subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 10 },
     card: {
       backgroundColor: colors.surface,
       borderRadius: 16,
