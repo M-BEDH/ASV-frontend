@@ -6,9 +6,10 @@ type Props = {
   title: string;
   right?: React.ReactNode;
   badge?: { label: string; bgColor: string; color: string };
+  clinicName?: string;
 };
 
-export default function AppHeader({ title, right, badge }: Props) {
+export default function AppHeader({ title, right, badge, clinicName }: Props) {
   const { colors, theme, toggleTheme } = useTheme();
   const styles = makeStyles(colors);
   const isWeb = Platform.OS === 'web';
@@ -39,11 +40,16 @@ export default function AppHeader({ title, right, badge }: Props) {
       {(title || badge) ? (
         <View style={styles.titleRow}>
           {title ? <Text style={[styles.title, isWeb && { fontSize: 20 }]}>{title}</Text> : null}
-          {badge && (
-            <View style={[styles.badge, { backgroundColor: badge.bgColor }]}>
-              <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
-            </View>
-          )}
+          <View style={styles.badgeRow}>
+            {badge && (
+              <View style={[styles.badge, { backgroundColor: badge.bgColor }]}>
+                <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+              </View>
+            )}
+            {clinicName && (
+              <Text style={styles.clinicName}>{clinicName}</Text>
+            )}
+          </View>
         </View>
       ) : null}
     </View>
@@ -107,12 +113,18 @@ function makeStyles(colors: any) {
       height: 36,
     },
     themeBtnText: { fontSize: 20 },
+    badgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
     badge: {
       paddingHorizontal: 6,
       paddingVertical: 3,
       borderRadius: 3,
     },
     badgeText: { fontSize: 11, fontWeight: '600' },
+    clinicName: { fontSize: 13, fontWeight: '400', color: '#888' },
     logo: { width: 50, height: 50, marginTop: 5, marginLeft: -8 },
   });
   
