@@ -6,10 +6,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Modal,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { makeCommonStyles } from '../../styles/common';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { animalsApi, ownersApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -18,6 +18,10 @@ import { useToast } from '../../context/ToastContext';
 import AppHeader from '../../components/AppHeader';
 import Dropdown from '../../components/Dropdown';
 import ConfirmModal from '../../components/ConfirmModal';
+import FormModal from '../../components/FormModal';
+import DateTimePickerInput from '../../components/DateTimePickerInput';
+import AnimalDetailModal from '../../components/AnimalDetailModal';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { Animal, Owner } from '../../types';
 
 type FormData = {
@@ -49,6 +53,9 @@ export default function AnimauxScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [confirm, setConfirm] = useState<ConfirmConfig | null>(null);
+  const [detailAnimal, setDetailAnimal] = useState<Animal | null>(null);
+  const [detailConsultations, setDetailConsultations] = useState<any[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const showConfirm = (cfg: ConfirmConfig) => setConfirm(cfg);
   const hideConfirm = () => setConfirm(null);
@@ -66,6 +73,28 @@ export default function AnimauxScreen() {
   }, []);
 
   useEffect(() => { fetchData(); }, []);
+
+  // ─── Détail animal ────────────────────────────────────────────────────────
+
+  const openDetail = async (animal: Animal) => {
+    setDetailAnimal(animal);
+    setDetailConsultations([]);
+    setDetailLoading(true);
+    try {
+      setDetailConsultations(await animalsApi.getConsultations(animal.id));
+    } catch {
+      setDetailConsultations([]);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const closeDetail = () => {
+    setDetailAnimal(null);
+    setDetailConsultations([]);
+  };
+
+  // ─── Animal CRUD ──────────────────────────────────────────────────────────
 
   const openCreate = () => {
     setEditTarget(null);
@@ -88,12 +117,15 @@ export default function AnimauxScreen() {
     setModalVisible(true);
   };
 
-  const doSave = async () => {
-    hideConfirm();
+  const handleSave = async () => {
+    if (!form.nom || !form.espece) {
+      setError('Le nom et l\'espèce sont obligatoires.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      const payload: any = {
+      const payload = {
         nom: form.nom,
         espece: form.espece,
         race: form.race || null,
@@ -102,35 +134,20 @@ export default function AnimauxScreen() {
         proprietaireId: form.proprietaireId || null,
       };
       if (editTarget) {
-        await animalsApi.update(editTarget.id, payload);
-        showToast('Animal modifié avec succès');
+        const updated = await animalsApi.update(editTarget.id, payload);
+        setAnimals((prev) => prev.map((a) => a.id === editTarget.id ? { ...a, ...updated } : a));
+        setModalVisible(false);
+        setTimeout(() => showToast('Animal modifié avec succès'), 400);
       } else {
-        await animalsApi.create(payload);
-        showToast('Animal créé avec succès');
+        const created = await animalsApi.create(payload);
+        setAnimals((prev) => [created, ...prev]);
+        setModalVisible(false);
+        setTimeout(() => showToast('Animal créé avec succès'), 400);
       }
-      setModalVisible(false);
-      fetchData();
     } catch (e: any) {
       setError(e.message);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleSave = () => {
-    if (!form.nom || !form.espece) {
-      setError('Le nom et l\'espèce sont obligatoires.');
-      return;
-    }
-    if (editTarget) {
-      showConfirm({
-        title: 'Modifier l\'animal',
-        message: `Confirmer la modification de ${editTarget.nom} ?`,
-        destructive: false,
-        onConfirm: doSave,
-      });
-    } else {
-      doSave();
     }
   };
 
@@ -143,8 +160,8 @@ export default function AnimauxScreen() {
         hideConfirm();
         try {
           await animalsApi.delete(animal.id);
+          setAnimals((prev) => prev.filter((a) => a.id !== animal.id));
           showToast('Animal supprimé');
-          fetchData();
         } catch (e: any) {
           showToast(e.message || 'Erreur lors de la suppression', 'error');
         }
@@ -152,21 +169,23 @@ export default function AnimauxScreen() {
     });
   };
 
-  const normalize = (s: string) =>
-    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  // ─── Rendu ────────────────────────────────────────────────────────────────
 
-  const filtered = animals.filter((a) => {
-    const q = normalize(search);
-    return (
-      normalize(a.nom).includes(q) ||
-      normalize(a.espece).includes(q) ||
-      (a.race && normalize(a.race).includes(q)) ||
-      (a.proprietaire &&
-        normalize(`${a.proprietaire.prenom} ${a.proprietaire.nom}`).includes(q))
-    );
-  });
+  const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-  const styles = makeStyles(colors);
+  const filtered = animals
+    .filter((a) => {
+      const q = normalize(search);
+      return (
+        normalize(a.nom).includes(q) ||
+        normalize(a.espece).includes(q) ||
+        (a.race && normalize(a.race).includes(q)) ||
+        (a.proprietaire && normalize(`${a.proprietaire.prenom} ${a.proprietaire.nom}`).includes(q))
+      );
+    })
+    .sort((a, b) => normalize(a.nom).localeCompare(normalize(b.nom)));
+
+  const styles = makeStyles(colors, isMobile);
 
   return (
     <View style={styles.container}>
@@ -205,23 +224,31 @@ export default function AnimauxScreen() {
         ) : (
           filtered.map((a) => (
             <View key={a.id} style={styles.card}>
-              <View style={styles.cardLeft}>
-                <Text style={styles.cardTitle}>{a.nom}</Text>
-                <Text style={styles.cardSub}>
-                  {a.espece}{a.race ? ` · ${a.race}` : ''}
-                </Text>
-                {a.proprietaire && (
-                  <Text style={styles.cardOwner}>
-                    👤 {a.proprietaire.prenom} {a.proprietaire.nom}
+              <TouchableOpacity style={styles.cardLeft} onPress={() => openDetail(a)} activeOpacity={0.7}>
+                {isMobile ? (
+                  <Text style={styles.cardTitle} numberOfLines={1}>
+                    {a.nom}{' '}
+                    <Text style={styles.cardSub}>{a.espece}{a.race ? ` · ${a.race}` : ''}</Text>
                   </Text>
+                ) : (
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+                    <Text style={styles.cardTitle}>{a.nom}</Text>
+                    <Text style={styles.cardSub}>{a.espece}</Text>
+                    {a.race ? <Text style={styles.cardSub}>{a.race}</Text> : null}
+                    {a.dateNaissance ? <Text style={styles.cardSub}>Né(e) le {new Date(a.dateNaissance).toLocaleDateString('fr-FR')}</Text> : null}
+                  </View>
                 )}
-                {a.dateNaissance && (
-                  <Text style={styles.cardDate}>
-                    Né(e) le {new Date(a.dateNaissance).toLocaleDateString('fr-FR')}
-                  </Text>
+                {a.proprietaire && (
+                  <View style={styles.cardOwner}>
+                    <MaterialCommunityIcons name="account-outline" size={13} color={colors.primary} />
+                    <Text style={styles.cardOwnerText}>{a.proprietaire.prenom} {a.proprietaire.nom}</Text>
+                  </View>
+                )}
+                {isMobile && a.dateNaissance && (
+                  <Text style={styles.cardDate}>Né(e) le {new Date(a.dateNaissance).toLocaleDateString('fr-FR')}</Text>
                 )}
                 {a.remarques ? <Text style={styles.cardRemark}>{a.remarques}</Text> : null}
-              </View>
+              </TouchableOpacity>
               {isVet && (
                 <View style={styles.cardActions}>
                   <TouchableOpacity onPress={() => openEdit(a)} style={styles.editBtn}>
@@ -242,133 +269,88 @@ export default function AnimauxScreen() {
         title={confirm?.title ?? ''}
         message={confirm?.message ?? ''}
         destructive={confirm?.destructive ?? false}
-        confirmLabel={confirm?.destructive ? 'Supprimer' : 'Confirmer'}
+        confirmLabel="Supprimer"
         onConfirm={confirm?.onConfirm ?? (() => {})}
         onCancel={hideConfirm}
       />
 
-      {/* Modal création / édition */}
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
-        <View style={styles.modal}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{editTarget ? 'Modifier l\'animal' : 'Nouvel animal'}</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalClose}>✕</Text>
-            </TouchableOpacity>
-          </View>
+      <AnimalDetailModal
+        animal={detailAnimal}
+        owners={owners}
+        consultations={detailConsultations}
+        consultationsLoading={detailLoading}
+        onClose={closeDetail}
+        onConsultationsChange={setDetailConsultations}
+      />
 
-          <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {/* ── Formulaire animal ── */}
+      <FormModal
+        visible={modalVisible}
+        title={editTarget ? 'Modifier l\'animal' : 'Nouvel animal'}
+        onClose={() => setModalVisible(false)}
+        onSave={handleSave}
+        saving={saving}
+        error={error}
+      >
+        <Text style={styles.label}>Nom *</Text>
+        <TextInput style={styles.input} value={form.nom} onChangeText={(v) => setForm({ ...form, nom: v })} placeholder="Nom de l'animal" placeholderTextColor={colors.textMuted} />
 
-            <Text style={styles.label}>Nom *</Text>
-            <TextInput style={styles.input} value={form.nom} onChangeText={(v) => setForm({ ...form, nom: v })} placeholder="Rex" placeholderTextColor={colors.textMuted} />
+        <Text style={styles.label}>Espèce *</Text>
+        <TextInput style={styles.input} value={form.espece} onChangeText={(v) => setForm({ ...form, espece: v })} placeholder="Espèce" placeholderTextColor={colors.textMuted} />
 
-            <Text style={styles.label}>Espèce *</Text>
-            <TextInput style={styles.input} value={form.espece} onChangeText={(v) => setForm({ ...form, espece: v })} placeholder="Chien" placeholderTextColor={colors.textMuted} />
+        <Text style={styles.label}>Race</Text>
+        <TextInput style={styles.input} value={form.race} onChangeText={(v) => setForm({ ...form, race: v })} placeholder="Race (optionnel)" placeholderTextColor={colors.textMuted} />
 
-            <Text style={styles.label}>Race</Text>
-            <TextInput style={styles.input} value={form.race} onChangeText={(v) => setForm({ ...form, race: v })} placeholder="Labrador" placeholderTextColor={colors.textMuted} />
+        <Text style={styles.label}>Date de naissance</Text>
+        <DateTimePickerInput
+          value={form.dateNaissance}
+          onChange={(v) => setForm({ ...form, dateNaissance: v })}
+          dateOnly
+        />
 
-            <Text style={styles.label}>Date de naissance (JJ-MM-AAAA)</Text>
-            <TextInput style={styles.input} value={form.dateNaissance} onChangeText={(v) => setForm({ ...form, dateNaissance: v })} placeholder="15-05-2020" placeholderTextColor={colors.textMuted} />
+        <Text style={styles.label}>Propriétaire</Text>
+        <Dropdown
+          items={[
+            { label: '— Aucun —', value: '' },
+            ...owners.map((o) => ({ label: `${o.prenom} ${o.nom}`, value: o.id })),
+          ]}
+          value={form.proprietaireId}
+          onChange={(v) => setForm({ ...form, proprietaireId: v })}
+          placeholder="Choisir un propriétaire"
+        />
 
-            <Text style={styles.label}>Propriétaire</Text>
-            <Dropdown
-              items={[
-                { label: '— Aucun —', value: '' },
-                ...owners.map((o) => ({ label: `${o.prenom} ${o.nom}`, value: o.id })),
-              ]}
-              value={form.proprietaireId}
-              onChange={(v) => setForm({ ...form, proprietaireId: v })}
-              placeholder="Choisir un propriétaire"
-            />
-
-            <Text style={styles.label}>Remarques</Text>
-            <TextInput
-              style={[styles.input, { height: 80 }]}
-              value={form.remarques}
-              onChangeText={(v) => setForm({ ...form, remarques: v })}
-              multiline
-              placeholder="Informations complémentaires..."
-              placeholderTextColor={colors.textMuted}
-            />
-
-            <TouchableOpacity
-              style={[styles.saveBtn, !isMobile && { alignSelf: 'center', width: '25%' }, saving && { opacity: 0.6 }]}
-              onPress={handleSave}
-              disabled={saving}
-            >
-              {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Enregistrer</Text>}
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      </Modal>
+        <Text style={styles.label}>Remarques</Text>
+        <TextInput
+          style={[styles.input, { height: 80 }]}
+          value={form.remarques}
+          onChangeText={(v) => setForm({ ...form, remarques: v })}
+          multiline
+          placeholder="Informations complémentaires..."
+          placeholderTextColor={colors.textMuted}
+        />
+      </FormModal>
     </View>
   );
 }
 
-// YYYY-MM-DD → DD-MM-YYYY (affichage)
 function toDisplayDate(iso: string): string {
   const [y, m, d] = iso.split('-');
   return `${d}-${m}-${y}`;
 }
 
-// DD-MM-YYYY → YYYY-MM-DD (API)
 function toIsoDate(display: string): string {
   const [d, m, y] = display.split('-');
   return `${y}-${m}-${d}`;
 }
 
-function makeStyles(colors: any) {
+function makeStyles(colors: any, isMobile: boolean) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    addBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-    addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-    searchRow: { padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
-    searchInput: {
-      backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
-      borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, color: colors.textPrimary,
-    },
-    list: { flex: 1, padding: 16 },
-    empty: { paddingTop: 60 },
-    emptyText: { color: colors.textMuted, fontSize: 15, textAlign: 'center' },
-    card: {
-      backgroundColor: colors.surface, borderRadius: 12, padding: 16,
-      marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between',
-      shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 2,
-    },
-    cardLeft: { flex: 1 },
-    cardTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
-    cardSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-    cardOwner: { fontSize: 12, color: colors.primary, marginTop: 4 },
-    cardDate: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-    cardRemark: { fontSize: 12, color: colors.textMuted, marginTop: 4, fontStyle: 'italic' },
-    cardActions: { gap: 8, justifyContent: 'center' },
-    editBtn: { padding: 6 },
-    editBtnText: { fontSize: 18 },
-    deleteBtn: { padding: 6 },
-    deleteBtnText: { fontSize: 18 },
-    modal: { flex: 1, backgroundColor: colors.background },
-    modalHeader: {
-      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-      padding: 20, paddingTop: 24, backgroundColor: colors.surface,
-      borderBottomWidth: 1, borderBottomColor: colors.border,
-    },
-    modalTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
-    modalClose: { fontSize: 22, color: colors.textMuted },
-    modalBody: { flex: 1, padding: 20 },
-    label: { fontSize: 14, fontWeight: '500', color: colors.textSecondary, marginBottom: 6, marginTop: 14 },
-    input: {
-      borderWidth: 1, borderColor: colors.border, borderRadius: 10,
-      padding: 12, fontSize: 15, color: colors.textPrimary, backgroundColor: colors.surface,
-    },
-    errorText: {
-      color: colors.danger, backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, fontSize: 13, marginBottom: 8,
-    },
-    saveBtn: {
-      backgroundColor: colors.primary, borderRadius: 10, padding: 14,
-      alignItems: 'center', marginTop: 24, marginBottom: 40,
-    },
-    saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    ...makeCommonStyles(colors, isMobile),
+    cardLeft: { flex: 1, gap: isMobile ? 4 : 8 },
+    cardSub: { fontSize: 12, fontWeight: 'normal', color: colors.textSecondary },
+    cardOwner: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+    cardOwnerText: { fontSize: 12, color: colors.primary, marginLeft: 3, flex: 1 },
+    cardDate: { fontSize: 12, color: colors.textMuted },
+    cardRemark: { fontSize: 12, color: colors.textMuted, fontStyle: 'italic' },
   });
 }
