@@ -59,7 +59,7 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     textMuted: '#9CA3AF',
     roleVet: '#60A5FA',
     roleAssistant: '#A78BFA',
-    roleClient: '#34D399',
+    roleClient: '#048f5c',
   },
 };
 
