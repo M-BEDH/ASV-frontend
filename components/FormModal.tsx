@@ -1,6 +1,7 @@
-import { Modal, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Platform, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useBreakpoint } from '../hooks/use-breakpoint';
+import { makeModalStyles } from '../styles/modal';
 
 type Props = {
   visible: boolean;
@@ -44,27 +45,7 @@ export default function FormModal({ visible, title, onClose, onSave, saving, err
 
 function makeStyles(colors: any) {
   return StyleSheet.create({
-    modal: {
-      flex: 1,
-      backgroundColor: colors.background,
-      maxWidth: Platform.OS === 'web' ? 680 : undefined,
-      alignSelf: Platform.OS === 'web' ? 'center' : undefined,
-      width: '100%',
-      marginTop: 60,
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 20,
-      paddingTop: 24,
-      backgroundColor: colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    title: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
-    close: { fontSize: 22, color: colors.textMuted },
-    body: { flex: 1, padding: 20 },
+    ...makeModalStyles(colors),
     error: {
       color: colors.danger,
       backgroundColor: '#FEF2F2',
