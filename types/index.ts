@@ -1,4 +1,4 @@
-export type UserRole = 'client' | 'veterinaire' | 'assistant';
+export type UserRole = 'client' | 'veterinaire' | 'assistant' | 'benevole' | 'responsable';
 
 export interface AuthUser {
   id: string;
@@ -6,11 +6,15 @@ export interface AuthUser {
   name: string;
   role: UserRole;
   clinicId: string | null;
+  clinicName: string | null;
 }
+
+export type EtablissementType = 'clinique' | 'refuge' | 'association';
 
 export interface Clinic {
   id: string;
   name: string;
+  type: EtablissementType;
   createdAt: string;
 }
 
