@@ -5,7 +5,7 @@ import type { AuthUser } from '../types';
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, clinicId?: string) => Promise<{ requiresClinicSelection: true; clinics: { id: string; name: string }[] } | void>;
   logout: () => Promise<void>;
   isVet: boolean;
   isClient: boolean;
@@ -36,9 +36,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string) => {
-    const me = await authApi.login(email, password);
-    setUser(me);
+  const login = async (email: string, password: string, clinicId?: string) => {
+    const result = await authApi.login(email, password, clinicId);
+    if (result && 'requiresClinicSelection' in result) {
+      return result;
+    }
+    setUser(result);
   };
 
   const logout = async () => {
