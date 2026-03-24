@@ -19,11 +19,11 @@ export default function FormModal({ visible, title, onClose, onSave, saving, err
   const styles = makeStyles(colors);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={styles.modal}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" accessibilityViewIsModal>
+      <View style={styles.modal} accessibilityRole="none" aria-modal={true} aria-label={title}>
         <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
-          <TouchableOpacity onPress={onClose}>
+          <Text style={styles.title} accessibilityRole="header">{title}</Text>
+          <TouchableOpacity onPress={onClose} accessibilityLabel="Fermer le formulaire" accessibilityRole="button">
             <Text style={styles.close}>✕</Text>
           </TouchableOpacity>
         </View>
@@ -35,7 +35,7 @@ export default function FormModal({ visible, title, onClose, onSave, saving, err
             onPress={onSave}
             disabled={saving}
           >
-            {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Enregistrer</Text>}
+            {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText} accessibilityRole="button" accessibilityLabel="Enregistrer">Enregistrer</Text>}
           </TouchableOpacity>
         </ScrollView>
       </View>

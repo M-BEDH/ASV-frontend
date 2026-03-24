@@ -25,8 +25,8 @@ function TabIcon({
 }) {
   const color = focused ? colors.primary : colors.textMuted;
   return (
-    <View style={{ alignItems: 'center', paddingVertical: isMobile ? 0 : 5 }}>
-      <MaterialCommunityIcons name={name} size={size} color={color} />
+    <View style={{ alignItems: 'center', paddingVertical: isMobile ? 0 : 5 }} accessibilityLabel={label} accessibilityRole="tab">
+      <MaterialCommunityIcons name={name} size={size} color={color} accessibilityElementsHidden />
       {!isMobile && <Text style={{ fontSize: 10, color, marginTop: 2 }}>{label}</Text>}
     </View>
   );

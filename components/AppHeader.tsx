@@ -15,7 +15,12 @@ export default function AppHeader({ title, right, badge, clinicName }: Props) {
   const isWeb = Platform.OS === 'web';
 
   const themeBtn = (
-    <TouchableOpacity onPress={toggleTheme} style={[styles.themeBtn, !isWeb && { marginTop: 20, marginLeft: -5 }]}>
+    <TouchableOpacity
+      onPress={toggleTheme}
+      style={[styles.themeBtn, !isWeb && { marginTop: 20, marginLeft: -5 }]}
+      accessibilityRole="button"
+      accessibilityLabel={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+    >
       <Text style={[styles.themeBtnText, { fontSize: isWeb ? 28 : 20 }]}>{theme === 'dark' ? '🔆' : <MaterialCommunityIcons name="weather-night" size={isWeb ? 28 : 23} color={colors.textSecondary}/>}</Text>
     </TouchableOpacity>
   );
@@ -29,6 +34,8 @@ export default function AppHeader({ title, right, badge, clinicName }: Props) {
                       source={require('../assets/asv_icon.png')}
                       style={styles.logo}
                       resizeMode="contain"
+                      accessibilityLabel="Logo Suivi Vétérinaire"
+                      accessibilityRole="image"
                     />
           <Text style={[styles.brand, { fontSize: isWeb ? 38 : 16 }]}>Suivi Vétérinaire</Text>
         </View>

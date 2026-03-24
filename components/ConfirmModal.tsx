@@ -24,18 +24,20 @@ export default function ConfirmModal({
   const boxBg = theme === 'light' ? '#ffffff' : colors.surface;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel} accessibilityViewIsModal>
       <View style={styles.overlay}>
-        <View style={[styles.box, { backgroundColor: boxBg, borderColor: colors.border }]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+        <View style={[styles.box, { backgroundColor: boxBg, borderColor: colors.border }]} aria-modal={true} aria-label={title}>
+          <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">{title}</Text>
           <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
           <View style={styles.buttons}>
-            <TouchableOpacity style={[styles.btn, { borderColor: colors.border }]} onPress={onCancel}>
+            <TouchableOpacity style={[styles.btn, { borderColor: colors.border }]} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Annuler">
               <Text style={[styles.btnText, { color: colors.textSecondary }]}>Annuler</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: destructive ? colors.danger : colors.primary, borderColor: 'transparent' }]}
               onPress={onConfirm}
+              accessibilityRole="button"
+              accessibilityLabel={confirmLabel}
             >
               <Text style={[styles.btnText, { color: '#fff' }]}>{confirmLabel}</Text>
             </TouchableOpacity>
