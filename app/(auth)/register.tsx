@@ -16,6 +16,7 @@ import { Link, router } from 'expo-router';
 import { authApi, clinicsApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import Dropdown from '../../components/Dropdown';
+import FieldLabel from '../../components/FieldLabel';
 import type { Clinic, EtablissementType, UserRole } from '../../types';
 
 const ROLES: { value: UserRole; label: string }[] = [
@@ -119,10 +120,10 @@ export default function RegisterScreen() {
         <View style={styles.card}>
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-          <Text style={styles.label}>Nom complet</Text>
-          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nom Prénom" placeholderTextColor={colors.textMuted} />
+          <FieldLabel required>Nom complet</FieldLabel>
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nom Prénom" placeholderTextColor={colors.textMuted} accessibilityLabel="Nom complet (requis)" />
 
-          <Text style={styles.label}>Email</Text>
+          <FieldLabel required>Email</FieldLabel>
           <TextInput
             style={styles.input}
             value={email}
@@ -132,9 +133,10 @@ export default function RegisterScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            accessibilityLabel="Email (requis)"
           />
 
-          <Text style={styles.label}>Mot de passe</Text>
+          <FieldLabel required>Mot de passe</FieldLabel>
           <TextInput
             style={styles.input}
             value={password}
@@ -142,9 +144,10 @@ export default function RegisterScreen() {
             placeholder="••••••••"
             placeholderTextColor={colors.textMuted}
             secureTextEntry
+            accessibilityLabel="Mot de passe (requis)"
           />
 
-          <Text style={styles.label}>Rôle</Text>
+          <FieldLabel required>Rôle</FieldLabel>
           <Dropdown
             items={ROLES}
             value={role}
@@ -155,7 +158,7 @@ export default function RegisterScreen() {
           {/* Vétérinaire : créer ou rejoindre un établissement */}
           {(role === 'veterinaire' || role === 'responsable') && (
             <View style={styles.clinicSection}>
-              <Text style={styles.label}>Établissement</Text>
+              <FieldLabel required>Établissement</FieldLabel>
               <Dropdown
                 items={[{ value: 'create', label: 'Créer un nouvel établissement' }, { value: 'join', label: 'Rejoindre un établissement existant' }]}
                 value={vetOption}
@@ -165,7 +168,7 @@ export default function RegisterScreen() {
 
               {vetOption === 'create' ? (
                 <>
-                  <Text style={styles.label}>Type d'établissement</Text>
+                  <FieldLabel required>Type d'établissement</FieldLabel>
                   <Dropdown
                     items={ETABLISSEMENT_TYPES}
                     value={newClinicType}
@@ -194,7 +197,7 @@ export default function RegisterScreen() {
           {/* Assistant / Bénévole : doit rejoindre un établissement */}
           {(role === 'assistant' || role === 'benevole') && (
             <View style={styles.clinicSection}>
-              <Text style={styles.label}>Votre établissement *</Text>
+              <FieldLabel required>Votre établissement</FieldLabel>
               <Dropdown
                 items={clinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
                 value={selectedClinicId}
@@ -207,7 +210,7 @@ export default function RegisterScreen() {
           {/* Client : établissement optionnel */}
           {role === 'client' && clinics.length > 0 && (
             <View style={styles.clinicSection}>
-              <Text style={styles.label}>Établissement (optionnel)</Text>
+              <FieldLabel>Établissement (optionnel)</FieldLabel>
               <Dropdown
                 items={clinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
                 value={selectedClinicId}

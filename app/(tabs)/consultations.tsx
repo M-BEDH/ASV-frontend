@@ -9,6 +9,7 @@ import { useCrud } from '../../hooks/useCrud';
 import AppHeader from '../../components/AppHeader';
 import ConfirmModal from '../../components/ConfirmModal';
 import FormModal from '../../components/FormModal';
+import FieldLabel from '../../components/FieldLabel';
 import Dropdown from '../../components/Dropdown';
 import DateTimePickerInput from '../../components/DateTimePickerInput';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -77,7 +78,14 @@ export default function ConsultationsScreen() {
       compteRendu: c.compteRendu ?? '',
       traitements: c.traitements ?? '',
     }),
-    validate: (f) => (!f.animalId || !f.dateConsultation || !f.motif ? 'Animal, date et motif sont obligatoires.' : null),
+    validate: (f) => {
+      if (!f.animalId || !f.dateConsultation || !f.motif) return 'Animal, date et motif sont obligatoires.';
+      const [datePart, timePart = '00:00'] = f.dateConsultation.split(' ');
+      const [d, m, y] = datePart.split('-');
+      const selected = new Date(`${y}-${m}-${d}T${timePart}`);
+      if (selected < new Date()) return 'La date de consultation est passée.';
+      return null;
+    },
     labels: {
       created: 'Consultation créée avec succès',
       updated: 'Consultation modifiée avec succès',
@@ -156,7 +164,7 @@ export default function ConsultationsScreen() {
         saving={saving}
         error={error}
       >
-        <Text style={styles.label}>Animal *</Text>
+        <FieldLabel required>Animal</FieldLabel>
         <Dropdown
           items={animals.map((a) => ({
             label: `${a.nom} (${a.espece})${a.proprietaire ? ` — ${a.proprietaire.prenom} ${a.proprietaire.nom}` : ''}`,
@@ -167,13 +175,13 @@ export default function ConsultationsScreen() {
           placeholder="Choisir un animal"
         />
 
-        <Text style={styles.label}>Date et heure *</Text>
+        <FieldLabel required>Date et heure</FieldLabel>
         <DateTimePickerInput
           value={form.dateConsultation}
           onChange={(v) => setForm({ ...form, dateConsultation: v })}
         />
 
-        <Text style={styles.label}>Motif *</Text>
+        <FieldLabel required>Motif</FieldLabel>
         <Dropdown
           items={[
             { label: 'Vaccin', value: 'Vaccin' },
@@ -186,7 +194,7 @@ export default function ConsultationsScreen() {
           placeholder="Choisir un motif"
         />
 
-        <Text style={styles.label}>Compte-rendu</Text>
+        <FieldLabel>Compte-rendu</FieldLabel>
         <TextInput
           style={[styles.input, { height: 100 }]}
           value={form.compteRendu}
@@ -194,9 +202,10 @@ export default function ConsultationsScreen() {
           multiline
           placeholder="Résultats de l'examen..."
           placeholderTextColor={colors.textMuted}
+          accessibilityLabel="Compte-rendu"
         />
 
-        <Text style={styles.label}>Traitements</Text>
+        <FieldLabel>Traitements</FieldLabel>
         <TextInput
           style={[styles.input, { height: 80 }]}
           value={form.traitements}
@@ -204,6 +213,7 @@ export default function ConsultationsScreen() {
           multiline
           placeholder="Médicaments prescrits..."
           placeholderTextColor={colors.textMuted}
+          accessibilityLabel="Traitements"
         />
       </FormModal>
     </View>

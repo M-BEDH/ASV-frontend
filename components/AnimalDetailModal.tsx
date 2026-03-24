@@ -17,6 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import FormModal from './FormModal';
 import ConfirmModal from './ConfirmModal';
+import FieldLabel from './FieldLabel';
 import Dropdown from './Dropdown';
 import DateTimePickerInput from './DateTimePickerInput';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -255,16 +256,16 @@ export default function AnimalDetailModal({
         saving={consultSaving}
         error={consultError}
       >
-        <Text style={styles.label}>Animal</Text>
+        <FieldLabel>Animal</FieldLabel>
         <Text style={[styles.input, { color: colors.textPrimary, paddingTop: 14 }]}>{animal?.nom} ({animal?.espece})</Text>
 
-        <Text style={styles.label}>Date et heure *</Text>
+        <FieldLabel required>Date et heure</FieldLabel>
         <DateTimePickerInput
           value={consultForm.dateConsultation}
           onChange={(v) => setConsultForm({ ...consultForm, dateConsultation: v })}
         />
 
-        <Text style={styles.label}>Motif *</Text>
+        <FieldLabel required>Motif</FieldLabel>
         <Dropdown
           items={[
             { label: 'Vaccin', value: 'Vaccin' },
@@ -277,7 +278,7 @@ export default function AnimalDetailModal({
           placeholder="Choisir un motif"
         />
 
-        <Text style={styles.label}>Compte-rendu</Text>
+        <FieldLabel>Compte-rendu</FieldLabel>
         <TextInput
           style={[styles.input, { height: 100 }]}
           value={consultForm.compteRendu}
@@ -285,9 +286,10 @@ export default function AnimalDetailModal({
           multiline
           placeholder="Résultats de l'examen..."
           placeholderTextColor={colors.textMuted}
+          accessibilityLabel="Compte-rendu"
         />
 
-        <Text style={styles.label}>Traitements</Text>
+        <FieldLabel>Traitements</FieldLabel>
         <TextInput
           style={[styles.input, { height: 80 }]}
           value={consultForm.traitements}
@@ -295,6 +297,7 @@ export default function AnimalDetailModal({
           multiline
           placeholder="Médicaments prescrits..."
           placeholderTextColor={colors.textMuted}
+          accessibilityLabel="Traitements"
         />
       </FormModal>
 

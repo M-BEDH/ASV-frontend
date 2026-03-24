@@ -14,6 +14,7 @@ import {
 
 import { Link, router } from 'expo-router';
 import Dropdown from '../../components/Dropdown';
+import FieldLabel from '../../components/FieldLabel';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -72,7 +73,7 @@ export default function LoginScreen() {
         <View style={styles.card}>
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-          <Text style={styles.label}>Email</Text>
+          <FieldLabel required>Email</FieldLabel>
           <TextInput
             style={styles.input}
             value={email}
@@ -82,9 +83,10 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            accessibilityLabel="Email (requis)"
           />
 
-          <Text style={styles.label}>Mot de passe</Text>
+          <FieldLabel required>Mot de passe</FieldLabel>
           <TextInput
             style={styles.input}
             value={password}
@@ -92,11 +94,12 @@ export default function LoginScreen() {
             placeholder="••••••••"
             placeholderTextColor={colors.textMuted}
             secureTextEntry
+            accessibilityLabel="Mot de passe (requis)"
           />
 
           {clinicChoices && (
             <>
-              <Text style={styles.label}>Choisissez votre établissement</Text>
+              <FieldLabel required>Choisissez votre établissement</FieldLabel>
               <Dropdown
                 items={clinicChoices.map(c => ({ label: c.name, value: c.id }))}
                 value={selectedClinicId ?? ''}

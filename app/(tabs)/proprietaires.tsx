@@ -9,6 +9,7 @@ import { useCrud } from '../../hooks/useCrud';
 import AppHeader from '../../components/AppHeader';
 import ConfirmModal from '../../components/ConfirmModal';
 import FormModal from '../../components/FormModal';
+import FieldLabel from '../../components/FieldLabel';
 import type { Owner } from '../../types';
 
 type FormData = {
@@ -181,25 +182,27 @@ export default function ProprietairesScreen() {
         saving={saving}
         error={error}
       >
-        <Text style={styles.label}>Nom *</Text>
+        <FieldLabel required>Nom</FieldLabel>
         <TextInput
           style={styles.input}
           value={form.nom}
           onChangeText={(v) => setForm({ ...form, nom: v })}
           placeholder="Nom"
           placeholderTextColor={colors.textMuted}
+          accessibilityLabel="Nom (requis)"
         />
 
-        <Text style={styles.label}>Prénom *</Text>
+        <FieldLabel required>Prénom</FieldLabel>
         <TextInput
           style={styles.input}
           value={form.prenom}
           onChangeText={(v) => setForm({ ...form, prenom: v })}
           placeholder="Prénom"
           placeholderTextColor={colors.textMuted}
+          accessibilityLabel="Prénom (requis)"
         />
 
-        <Text style={styles.label}>Téléphone</Text>
+        <FieldLabel>Téléphone</FieldLabel>
         <TextInput
           style={styles.input}
           value={form.telephone}
@@ -207,9 +210,10 @@ export default function ProprietairesScreen() {
           placeholder="06 12 34 56 78"
           placeholderTextColor={colors.textMuted}
           keyboardType="phone-pad"
+          accessibilityLabel="Téléphone"
         />
 
-        <Text style={styles.label}>Email</Text>
+        <FieldLabel>Email</FieldLabel>
         <TextInput
           style={styles.input}
           value={form.email}
@@ -218,9 +222,10 @@ export default function ProprietairesScreen() {
           placeholderTextColor={colors.textMuted}
           keyboardType="email-address"
           autoCapitalize="none"
+          accessibilityLabel="Email"
         />
 
-        <Text style={styles.label}>Adresse</Text>
+        <FieldLabel>Adresse</FieldLabel>
         <TextInput
           style={[styles.input, { height: 80 }]}
           value={form.adresse}
@@ -228,6 +233,7 @@ export default function ProprietairesScreen() {
           multiline
           placeholder="Adresse"
           placeholderTextColor={colors.textMuted}
+          accessibilityLabel="Adresse"
         />
       </FormModal>
     </View>

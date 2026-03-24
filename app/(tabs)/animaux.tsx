@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,12 @@ import { useBreakpoint } from '../../hooks/use-breakpoint';
 import { animalsApi, ownersApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { useToast } from '../../context/ToastContext';
+import { useCrud } from '../../hooks/useCrud';
 import AppHeader from '../../components/AppHeader';
 import Dropdown from '../../components/Dropdown';
 import ConfirmModal from '../../components/ConfirmModal';
 import FormModal from '../../components/FormModal';
+import FieldLabel from '../../components/FieldLabel';
 import DateTimePickerInput from '../../components/DateTimePickerInput';
 import AnimalDetailModal from '../../components/AnimalDetailModal';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -35,44 +36,71 @@ type FormData = {
 
 const EMPTY_FORM: FormData = { nom: '', espece: '', race: '', dateNaissance: '', remarques: '', proprietaireId: '' };
 
-type ConfirmConfig = { title: string; message: string; destructive: boolean; onConfirm: () => void };
-
 export default function AnimauxScreen() {
   const { isVet, isClient } = useAuth();
   const { colors } = useTheme();
-  const { showToast } = useToast();
   const { listPadding, isMobile } = useBreakpoint();
-  const [animals, setAnimals] = useState<Animal[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editTarget, setEditTarget] = useState<Animal | null>(null);
-  const [form, setForm] = useState<FormData>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [confirm, setConfirm] = useState<ConfirmConfig | null>(null);
   const [detailAnimal, setDetailAnimal] = useState<Animal | null>(null);
   const [detailConsultations, setDetailConsultations] = useState<any[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  const showConfirm = (cfg: ConfirmConfig) => setConfirm(cfg);
-  const hideConfirm = () => setConfirm(null);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const [a, o] = await Promise.all([animalsApi.list(), ownersApi.list()]);
-      setAnimals(a);
-      setOwners(o);
-    } catch {
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const fetchAll = useCallback(async () => {
+    const [a, o] = await Promise.all([animalsApi.list(), ownersApi.list()]);
+    setOwners(o);
+    return a;
   }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  const {
+    items: animals,
+    loading,
+    refreshing,
+    setRefreshing,
+    fetchData,
+    modalVisible,
+    setModalVisible,
+    editTarget,
+    form,
+    setForm,
+    saving,
+    error,
+    confirm,
+    hideConfirm,
+    openCreate,
+    openEdit,
+    handleSave,
+    handleDelete,
+  } = useCrud<Animal, FormData>({
+    fetchAll,
+    createItem: animalsApi.create,
+    updateItem: animalsApi.update,
+    deleteItem: animalsApi.delete,
+    emptyForm: EMPTY_FORM,
+    toPayload: (f) => ({
+      nom: f.nom,
+      espece: f.espece,
+      race: f.race || null,
+      dateNaissance: f.dateNaissance ? toIsoDate(f.dateNaissance) : null,
+      remarques: f.remarques || null,
+      proprietaireId: f.proprietaireId || null,
+    }),
+    itemToForm: (a) => ({
+      nom: a.nom,
+      espece: a.espece,
+      race: a.race ?? '',
+      dateNaissance: a.dateNaissance ? toDisplayDate(a.dateNaissance) : '',
+      remarques: a.remarques ?? '',
+      proprietaireId: a.proprietaire?.id ?? '',
+    }),
+    validate: (f) => (!f.nom || !f.espece) ? "Le nom et l'espèce sont obligatoires." : null,
+    labels: {
+      created: 'Animal créé avec succès',
+      updated: 'Animal modifié avec succès',
+      deleted: 'Animal supprimé',
+      deleteMessage: (a) => `Supprimer ${a.nom} ?`,
+    },
+  });
 
   // ─── Détail animal ────────────────────────────────────────────────────────
 
@@ -92,81 +120,6 @@ export default function AnimauxScreen() {
   const closeDetail = () => {
     setDetailAnimal(null);
     setDetailConsultations([]);
-  };
-
-  // ─── Animal CRUD ──────────────────────────────────────────────────────────
-
-  const openCreate = () => {
-    setEditTarget(null);
-    setForm(EMPTY_FORM);
-    setError('');
-    setModalVisible(true);
-  };
-
-  const openEdit = (animal: Animal) => {
-    setEditTarget(animal);
-    setForm({
-      nom: animal.nom,
-      espece: animal.espece,
-      race: animal.race ?? '',
-      dateNaissance: animal.dateNaissance ? toDisplayDate(animal.dateNaissance) : '',
-      remarques: animal.remarques ?? '',
-      proprietaireId: animal.proprietaire?.id ?? '',
-    });
-    setError('');
-    setModalVisible(true);
-  };
-
-  const handleSave = async () => {
-    if (!form.nom || !form.espece) {
-      setError('Le nom et l\'espèce sont obligatoires.');
-      return;
-    }
-    setSaving(true);
-    setError('');
-    try {
-      const payload = {
-        nom: form.nom,
-        espece: form.espece,
-        race: form.race || null,
-        dateNaissance: form.dateNaissance ? toIsoDate(form.dateNaissance) : null,
-        remarques: form.remarques || null,
-        proprietaireId: form.proprietaireId || null,
-      };
-      if (editTarget) {
-        const updated = await animalsApi.update(editTarget.id, payload);
-        setAnimals((prev) => prev.map((a) => a.id === editTarget.id ? { ...a, ...updated } : a));
-        setModalVisible(false);
-        setTimeout(() => showToast('Animal modifié avec succès'), 400);
-      } else {
-        const created = await animalsApi.create(payload);
-        setAnimals((prev) => [created, ...prev]);
-        setModalVisible(false);
-        setTimeout(() => showToast('Animal créé avec succès'), 400);
-      }
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = (animal: Animal) => {
-    showConfirm({
-      title: 'Supprimer',
-      message: `Supprimer ${animal.nom} ?`,
-      destructive: true,
-      onConfirm: async () => {
-        hideConfirm();
-        try {
-          await animalsApi.delete(animal.id);
-          setAnimals((prev) => prev.filter((a) => a.id !== animal.id));
-          showToast('Animal supprimé');
-        } catch (e: any) {
-          showToast(e.message || 'Erreur lors de la suppression', 'error');
-        }
-      },
-    });
   };
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
@@ -192,7 +145,7 @@ export default function AnimauxScreen() {
       <AppHeader
         title="Animaux"
         right={isVet ? (
-          <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
+          <TouchableOpacity style={styles.addBtn} onPress={() => openCreate()}>
             <Text style={styles.addBtnText}>+ Ajouter</Text>
           </TouchableOpacity>
         ) : undefined}
@@ -286,29 +239,29 @@ export default function AnimauxScreen() {
       {/* ── Formulaire animal ── */}
       <FormModal
         visible={modalVisible}
-        title={editTarget ? 'Modifier l\'animal' : 'Nouvel animal'}
+        title={editTarget ? "Modifier l'animal" : 'Nouvel animal'}
         onClose={() => setModalVisible(false)}
         onSave={handleSave}
         saving={saving}
         error={error}
       >
-        <Text style={styles.label}>Nom *</Text>
-        <TextInput style={styles.input} value={form.nom} onChangeText={(v) => setForm({ ...form, nom: v })} placeholder="Nom de l'animal" placeholderTextColor={colors.textMuted} />
+        <FieldLabel required>Nom</FieldLabel>
+        <TextInput style={styles.input} value={form.nom} onChangeText={(v) => setForm({ ...form, nom: v })} placeholder="Nom de l'animal" placeholderTextColor={colors.textMuted} accessibilityLabel="Nom de l'animal (requis)" />
 
-        <Text style={styles.label}>Espèce *</Text>
-        <TextInput style={styles.input} value={form.espece} onChangeText={(v) => setForm({ ...form, espece: v })} placeholder="Espèce" placeholderTextColor={colors.textMuted} />
+        <FieldLabel required>Espèce</FieldLabel>
+        <TextInput style={styles.input} value={form.espece} onChangeText={(v) => setForm({ ...form, espece: v })} placeholder="Espèce" placeholderTextColor={colors.textMuted} accessibilityLabel="Espèce (requis)" />
 
-        <Text style={styles.label}>Race</Text>
-        <TextInput style={styles.input} value={form.race} onChangeText={(v) => setForm({ ...form, race: v })} placeholder="Race (optionnel)" placeholderTextColor={colors.textMuted} />
+        <FieldLabel>Race</FieldLabel>
+        <TextInput style={styles.input} value={form.race} onChangeText={(v) => setForm({ ...form, race: v })} placeholder="Race (optionnel)" placeholderTextColor={colors.textMuted} accessibilityLabel="Race" />
 
-        <Text style={styles.label}>Date de naissance</Text>
+        <FieldLabel>Date de naissance</FieldLabel>
         <DateTimePickerInput
           value={form.dateNaissance}
           onChange={(v) => setForm({ ...form, dateNaissance: v })}
           dateOnly
         />
 
-        <Text style={styles.label}>Propriétaire</Text>
+        <FieldLabel>Propriétaire</FieldLabel>
         <Dropdown
           items={[
             { label: '— Aucun —', value: '' },
@@ -319,7 +272,7 @@ export default function AnimauxScreen() {
           placeholder="Choisir un propriétaire"
         />
 
-        <Text style={styles.label}>Remarques</Text>
+        <FieldLabel>Remarques</FieldLabel>
         <TextInput
           style={[styles.input, { height: 80 }]}
           value={form.remarques}
@@ -327,6 +280,7 @@ export default function AnimauxScreen() {
           multiline
           placeholder="Informations complémentaires..."
           placeholderTextColor={colors.textMuted}
+          accessibilityLabel="Remarques"
         />
       </FormModal>
     </View>
