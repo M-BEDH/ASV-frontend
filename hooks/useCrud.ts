@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { useToast } from '../context/ToastContext';
 
 export type ConfirmConfig = {
@@ -49,7 +50,7 @@ export function useCrud<TItem extends { id: string }, TForm>(opts: CrudOptions<T
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
 
   const openCreate = (overrides?: Partial<TForm>) => {
     setEditTarget(null);
