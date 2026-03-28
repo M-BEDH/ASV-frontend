@@ -100,6 +100,7 @@ export const authApi = {
 
 export const clinicsApi = {
   list: () => request<any[]>('/api/clinics'),
+  update: (id: string, name: string) => request<any>(`/api/clinics/${id}`, { method: 'PUT', body: JSON.stringify({ name }) }),
 };
 
 // ─── Animals ──────────────────────────────────────────────────────────────────
