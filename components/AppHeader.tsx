@@ -7,9 +7,10 @@ type Props = {
   right?: React.ReactNode;
   badge?: { label: string; bgColor: string; color: string };
   clinicName?: string;
+  clinicNameRight?: React.ReactNode;
 };
 
-export default function AppHeader({ title, right, badge, clinicName }: Props) {
+export default function AppHeader({ title, right, badge, clinicName, clinicNameRight }: Props) {
   const { colors, theme, toggleTheme } = useTheme();
   const styles = makeStyles(colors);
   const isWeb = Platform.OS === 'web';
@@ -54,7 +55,10 @@ export default function AppHeader({ title, right, badge, clinicName }: Props) {
               </View>
             )}
             {clinicName && (
-              <Text style={styles.clinicName}>{clinicName}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={styles.clinicName}>{clinicName}</Text>
+                {clinicNameRight}
+              </View>
             )}
           </View>
         </View>
