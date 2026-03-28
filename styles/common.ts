@@ -11,7 +11,7 @@ export function makeCommonStyles(colors: any, isMobile = false) {
   return {
     container: { flex: 1, backgroundColor: colors.background },
     addBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-    addBtnText: { color: '#fff', fontWeight: '700' as const, fontSize: 14 },
+    addBtnText: { color: '#fff', fontWeight: '400' as const, fontSize: isMobile ? 13 : 16 },
     searchRow: { padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
     searchInput: {
       backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
