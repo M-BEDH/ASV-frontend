@@ -8,17 +8,19 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Modal,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
-import { consultationsApi } from '../../services/api';
+import { consultationsApi, clinicsApi } from '../../services/api';
+import { TextInput } from 'react-native';
 import AppHeader from '../../components/AppHeader';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { Consultation } from '../../types';
 
 export default function AgendaScreen() {
-  const { user, logout, isVet } = useAuth();
+  const { user, logout, isVet, refreshUser } = useAuth();
   const { colors, theme } = useTheme();
   const { listPadding, isMobile } = useBreakpoint();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -26,6 +28,9 @@ export default function AgendaScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'today'>('all');
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [clinicModalVisible, setClinicModalVisible] = useState(false);
+  const [clinicNameInput, setClinicNameInput] = useState('');
+  const canEditClinic = user?.role === 'responsable' || user?.role === 'veterinaire';
 
   const fetchData = async () => {
     try {
@@ -97,12 +102,48 @@ export default function AgendaScreen() {
         title={`${user?.name ?? ''}`}
         badge={{ label: roleLabel(user?.role), bgColor: roleBgColor(user?.role, colors), color: '#ffffff' }}
         clinicName={user?.clinicName ?? undefined}
+        clinicNameRight={canEditClinic ? (
+          <TouchableOpacity onPress={() => { setClinicNameInput(user?.clinicName ?? ''); setClinicModalVisible(true); }}>
+            <MaterialCommunityIcons name="pencil-outline" size={14} color={colors.textMuted} />
+          </TouchableOpacity>
+        ) : undefined}
         right={
           <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
             <Text style={styles.logoutText}>Déconnexion</Text>
           </TouchableOpacity>
         }
       />
+
+      <Modal visible={clinicModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Modifier le nom de l'établissement</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={clinicNameInput}
+              onChangeText={setClinicNameInput}
+              placeholder="Nom de l'établissement"
+              placeholderTextColor={colors.textMuted}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity onPress={() => setClinicModalVisible(false)} style={styles.modalCancel}>
+                <Text style={{ color: colors.textSecondary }}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirm}
+                onPress={async () => {
+                  if (!clinicNameInput.trim() || !user?.clinicId) return;
+                  await clinicsApi.update(user.clinicId, clinicNameInput.trim());
+                  await refreshUser();
+                  setClinicModalVisible(false);
+                }}
+              >
+                <Text style={{ color: '#fff' }}>Enregistrer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <ScrollView
         style={[styles.scroll, { paddingHorizontal: listPadding }]}
@@ -206,13 +247,17 @@ export default function AgendaScreen() {
 function roleLabel(role?: string | null) {
   if (role === 'veterinaire') return 'Vétérinaire';
   if (role === 'assistant') return 'Assistant(e)';
+  if (role === 'responsable') return 'Responsable';
+  if (role === 'benevole') return 'Bénévole';
   return 'Client';
 }
 
 function roleBgColor(role?: string | null, colors?: any) {
-  if (role === 'veterinaire') return colors?.roleVet ?? '#4a82fc';
-  if (role === 'assistant') return colors?.roleAssistant ?? '#fab993';
-  return colors?.roleClient ?? '#0ff8ae';
+  if (role === 'veterinaire') return colors.roleVet;
+  if (role === 'assistant') return colors.roleAssistant;
+  if (role === 'responsable') return colors.roleResponsable;
+  if (role === 'benevole') return colors.roleBenevole;
+  return colors.roleClient;
 }
 
 function makeStyles(colors: any, theme: 'light' | 'dark') {
@@ -289,5 +334,12 @@ function makeStyles(colors: any, theme: 'light' | 'dark') {
     consultEspece: { fontSize: 13, fontWeight: '400', color: colors.textMuted },
     consultMotif: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
     consultVet: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    modalCard: { backgroundColor: colors.surface, borderRadius: 16, padding: 24, width: '100%', maxWidth: 400 },
+    modalTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 16 },
+    modalInput: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontSize: 15, color: colors.textPrimary, backgroundColor: colors.background, marginBottom: 16 },
+    modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
+    modalCancel: { paddingHorizontal: 16, paddingVertical: 10 },
+    modalConfirm: { backgroundColor: colors.primary, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 },
   });
 }
