@@ -22,6 +22,8 @@ type ThemeColors = {
   roleVet: string;
   roleAssistant: string;
   roleClient: string;
+  roleResponsable: string;
+  roleBenevole: string;
 };
 
 export const Colors: Record<'light' | 'dark', ThemeColors> = {
@@ -39,9 +41,11 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     textPrimary: '#111827',
     textSecondary: '#575b63',
     textMuted: '#9CA3AF',
-    roleVet: '#4a82fc',
+    roleVet: '#fc4a4a',
     roleAssistant: '#9e6af8',
-    roleClient: '#0ff8ae'
+    roleClient: '#0ff8ae',
+    roleResponsable: '#b94705',
+    roleBenevole: '#22c55e',
   },
   dark: {
     primary: '#68acfa',
@@ -57,9 +61,11 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     textPrimary: '#F9FAFB',
     textSecondary: '#D1D5DB',
     textMuted: '#9CA3AF',
-    roleVet: '#60A5FA',
+    roleVet: '#ff5656',
     roleAssistant: '#A78BFA',
     roleClient: '#048f5c',
+    roleResponsable: '#b8561d',
+    roleBenevole: '#42cc75',
   },
 };
 
