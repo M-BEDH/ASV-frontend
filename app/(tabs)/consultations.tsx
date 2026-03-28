@@ -26,7 +26,7 @@ type FormData = {
 const EMPTY_FORM: FormData = { animalId: '', dateConsultation: '', motif: '', compteRendu: '', traitements: '' };
 
 export default function ConsultationsScreen() {
-  const { isVet } = useAuth();
+  const { isVet, isReadOnly } = useAuth();
   const { colors } = useTheme();
   const { listPadding, isMobile } = useBreakpoint();
   const [animals, setAnimals] = useState<Animal[]>([]);
@@ -102,13 +102,13 @@ export default function ConsultationsScreen() {
     .filter((c) => new Date(c.dateConsultation) < now)
     .sort((a, b) => new Date(b.dateConsultation).getTime() - new Date(a.dateConsultation).getTime());
 
-  const styles = makeStyles(colors);
+  const styles = makeStyles(colors, isMobile);
 
   return (
     <View style={styles.container}>
       <AppHeader
         title="Consultations"
-        right={isVet ? (
+        right={isVet && !isReadOnly ? (
           <TouchableOpacity style={styles.addBtn} onPress={() => openCreate({ dateConsultation: formatDatetimeLocal(new Date()) })}>
             <Text style={styles.addBtnText}>+ Ajouter</Text>
           </TouchableOpacity>
@@ -130,7 +130,7 @@ export default function ConsultationsScreen() {
             {upcomingOpen && (upcoming.length === 0 ? (
               <Text style={styles.emptyText}>Aucune consultation à venir</Text>
             ) : (
-              upcoming.map((c) => <ConsultCard key={c.id} c={c} isVet={isVet} isMobile={isMobile} colors={colors} onEdit={openEdit} onDelete={handleDelete} styles={styles} />)
+              upcoming.map((c) => <ConsultCard key={c.id} c={c} isVet={isVet && !isReadOnly} isMobile={isMobile} colors={colors} onEdit={openEdit} onDelete={handleDelete} styles={styles} />)
             ))}
 
             <TouchableOpacity style={[styles.sectionHeader, { marginTop: 12 }]} onPress={() => setPastOpen(!pastOpen)} activeOpacity={0.7}>
@@ -140,7 +140,7 @@ export default function ConsultationsScreen() {
             {pastOpen && (past.length === 0 ? (
               <Text style={styles.emptyText}>Aucune consultation passée</Text>
             ) : (
-              past.map((c) => <ConsultCard key={c.id} c={c} isVet={isVet} isMobile={isMobile} colors={colors} onEdit={openEdit} onDelete={handleDelete} styles={styles} />)
+              past.map((c) => <ConsultCard key={c.id} c={c} isVet={isVet && !isReadOnly} isMobile={isMobile} colors={colors} onEdit={openEdit} onDelete={handleDelete} styles={styles} />)
             ))}
           </>
         )}
@@ -287,9 +287,9 @@ function toIsoDatetime(display: string): string {
   return localDate.toISOString().slice(0, 16).replace('T', ' ');
 }
 
-function makeStyles(colors: any) {
+function makeStyles(colors: any, isMobile = false) {
   return StyleSheet.create({
-    ...makeCommonStyles(colors),
+    ...makeCommonStyles(colors, isMobile),
     sectionHeader: {
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
       backgroundColor: colors.surface, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 12,

@@ -25,7 +25,7 @@ const EMPTY_FORM: FormData = { nom: '', prenom: '', adresse: '', telephone: '', 
 const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 export default function ProprietairesScreen() {
-  const { user, isVet, isClient } = useAuth();
+  const { user, isVet, isClient, isReadOnly } = useAuth();
   const { colors } = useTheme();
   const { listPadding, isMobile } = useBreakpoint();
   const [search, setSearch] = useState('');
@@ -97,13 +97,13 @@ export default function ProprietairesScreen() {
       <AppHeader
         title={isClient ? 'Mon profil' : 'Propriétaires'}
         right={
-          isVet ? (
+          isVet && !isReadOnly ? (
             <TouchableOpacity style={styles.addBtn} onPress={() => openCreate()}>
               <Text style={styles.addBtnText}>+ Ajouter</Text>
             </TouchableOpacity>
           ) : isClient && owners.length === 0 ? (
             <TouchableOpacity style={styles.addBtn} onPress={() => openCreate({ email: user?.email ?? '' })}>
-              <Text style={styles.addBtnText}>Créer mon profil</Text>
+              <Text style={styles.addBtnText}>Créer le profil</Text>
             </TouchableOpacity>
           ) : undefined
         }
@@ -149,16 +149,18 @@ export default function ProprietairesScreen() {
                   </View>
                 )}
               </View>
-              <View style={styles.cardActions}>
-                <TouchableOpacity onPress={() => openEdit(o)} style={styles.editBtn}>
-                  <Text style={styles.editBtnText}>✏️</Text>
-                </TouchableOpacity>
-                {isVet && (
-                  <TouchableOpacity onPress={() => handleDelete(o)} style={styles.deleteBtn}>
-                    <Text style={styles.deleteBtnText}>🗑️</Text>
+              {!isReadOnly && (
+                <View style={styles.cardActions}>
+                  <TouchableOpacity onPress={() => openEdit(o)} style={styles.editBtn}>
+                    <Text style={styles.editBtnText}>✏️</Text>
                   </TouchableOpacity>
-                )}
-              </View>
+                  {isVet && (
+                    <TouchableOpacity onPress={() => handleDelete(o)} style={styles.deleteBtn}>
+                      <Text style={styles.deleteBtnText}>🗑️</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
             </View>
           ))
         )}
@@ -218,7 +220,7 @@ export default function ProprietairesScreen() {
           style={styles.input}
           value={form.email}
           onChangeText={(v) => setForm({ ...form, email: v })}
-          placeholder="votre@email.com"
+          placeholder="email"
           placeholderTextColor={colors.textMuted}
           keyboardType="email-address"
           autoCapitalize="none"
