@@ -7,8 +7,10 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string, clinicId?: string) => Promise<{ requiresClinicSelection: true; clinics: { id: string; name: string }[] } | void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   isVet: boolean;
   isClient: boolean;
+  isReadOnly: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -49,11 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
-  const isVet = user?.role === 'veterinaire' || user?.role === 'assistant';
+  const refreshUser = async () => {
+    const me = await authApi.me();
+    setUser(me);
+  };
+
+  const isVet = user?.role === 'veterinaire' || user?.role === 'assistant' || user?.role === 'responsable';
   const isClient = user?.role === 'client';
+  const isReadOnly = user?.role === 'benevole';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isVet, isClient }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, isVet, isClient, isReadOnly }}>
       {children}
     </AuthContext.Provider>
   );
