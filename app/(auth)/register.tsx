@@ -86,7 +86,12 @@ export default function RegisterScreen() {
           return;
         }
         payload.clinicId = selectedClinicId;
-      } else if (role === 'client' && selectedClinicId) {
+      } else if (role === 'client') {
+        if (!selectedClinicId) {
+          setError('Veuillez sélectionner votre établissement.');
+          setLoading(false);
+          return;
+        }
         payload.clinicId = selectedClinicId;
       }
 
@@ -134,17 +139,6 @@ export default function RegisterScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             accessibilityLabel="Email (requis)"
-          />
-
-          <FieldLabel required>Mot de passe</FieldLabel>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor={colors.textMuted}
-            secureTextEntry
-            accessibilityLabel="Mot de passe (requis)"
           />
 
           <FieldLabel required>Rôle</FieldLabel>
@@ -207,10 +201,10 @@ export default function RegisterScreen() {
             </View>
           )}
 
-          {/* Client : établissement optionnel */}
-          {role === 'client' && clinics.length > 0 && (
+          {/* Client : établissement obligatoire */}
+          {role === 'client' && (
             <View style={styles.clinicSection}>
-              <FieldLabel>Établissement (optionnel)</FieldLabel>
+              <FieldLabel required>Votre établissement</FieldLabel>
               <Dropdown
                 items={clinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
                 value={selectedClinicId}
@@ -219,6 +213,17 @@ export default function RegisterScreen() {
               />
             </View>
           )}
+
+          <FieldLabel required>Mot de passe</FieldLabel>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            placeholderTextColor={colors.textMuted}
+            secureTextEntry
+            accessibilityLabel="Mot de passe (requis)"
+          />
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
