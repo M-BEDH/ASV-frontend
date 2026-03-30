@@ -64,6 +64,7 @@ export default function ConsultationsScreen() {
     updateItem: consultationsApi.update,
     deleteItem: consultationsApi.delete,
     emptyForm: EMPTY_FORM,
+    // Convertit les données du formulaire en payload pour l'API. La date est convertie au format ISO attendu par le backend.
     toPayload: (f) => ({
       animalId: f.animalId,
       dateConsultation: toIsoDatetime(f.dateConsultation),
@@ -71,6 +72,7 @@ export default function ConsultationsScreen() {
       compteRendu: f.compteRendu || null,
       traitements: f.traitements || null,
     }),
+    // Convertit une consultation en données de formulaire. La date est convertie au format local pour l'affichage.
     itemToForm: (c) => ({
       animalId: c.animal?.id ?? '',
       dateConsultation: formatDatetimeLocal(new Date(c.dateConsultation)),
@@ -78,6 +80,7 @@ export default function ConsultationsScreen() {
       compteRendu: c.compteRendu ?? '',
       traitements: c.traitements ?? '',
     }),
+    // Valide les données du formulaire avant l'envoi. Vérifie que les champs obligatoires sont remplis et que la date n'est pas passée.
     validate: (f) => {
       if (!f.animalId || !f.dateConsultation || !f.motif) return 'Animal, date et motif sont obligatoires.';
       const [datePart, timePart = '00:00'] = f.dateConsultation.split(' ');
@@ -95,6 +98,7 @@ export default function ConsultationsScreen() {
   });
 
   const now = new Date();
+  // Sépare les consultations à venir et passées, puis les trie par date (les plus proches en premier pour les à venir, les plus récentes en premier pour les passées)
   const upcoming = consultations
     .filter((c) => new Date(c.dateConsultation) >= now)
     .sort((a, b) => new Date(a.dateConsultation).getTime() - new Date(b.dateConsultation).getTime());

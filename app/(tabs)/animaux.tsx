@@ -77,6 +77,7 @@ export default function AnimauxScreen() {
     updateItem: animalsApi.update,
     deleteItem: animalsApi.delete,
     emptyForm: EMPTY_FORM,
+    // Convertit les données du formulaire en payload pour l'API. Les champs optionnels sont envoyés à null si vides, et la date est convertie au format ISO attendu par le backend.
     toPayload: (f) => ({
       nom: f.nom,
       espece: f.espece,
@@ -85,6 +86,7 @@ export default function AnimauxScreen() {
       remarques: f.remarques || null,
       proprietaireId: f.proprietaireId || null,
     }),
+    // Convertit un animal en données de formulaire. Les champs optionnels sont convertis en chaîne vide si null pour l'affichage, et la date est convertie au format local pour l'affichage.
     itemToForm: (a) => ({
       nom: a.nom,
       espece: a.espece,
@@ -93,6 +95,7 @@ export default function AnimauxScreen() {
       remarques: a.remarques ?? '',
       proprietaireId: a.proprietaire?.id ?? '',
     }),
+    // Valide les données du formulaire avant l'envoi. Vérifie que les champs obligatoires sont remplis.
     validate: (f) => (!f.nom || !f.espece) ? "Le nom et l'espèce sont obligatoires." : null,
     labels: {
       created: 'Animal créé avec succès',
@@ -105,6 +108,7 @@ export default function AnimauxScreen() {
   // ─── Détail animal ────────────────────────────────────────────────────────
 
   const openDetail = async (animal: Animal) => {
+    // Ouvre le modal de détail pour un animal donné. Charge les consultations associées à l'animal.
     setDetailAnimal(animal);
     setDetailConsultations([]);
     setDetailLoading(true);
@@ -124,9 +128,11 @@ export default function AnimauxScreen() {
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
 
+  // Normalise une chaîne pour la recherche en supprimant les accents et en convertissant en minuscules. Permet une recherche insensible à la casse et aux accents.
   const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const filtered = animals
+  // Applique le filtre de recherche sur les animaux. La recherche est insensible à la casse et aux accents, et vérifie le nom, l'espèce, la race et le nom du propriétaire.
     .filter((a) => {
       const q = normalize(search);
       return (
@@ -136,6 +142,7 @@ export default function AnimauxScreen() {
         (a.proprietaire && normalize(`${a.proprietaire.prenom} ${a.proprietaire.nom}`).includes(q))
       );
     })
+    // Trie les animaux par nom de manière insensible à la casse et aux accents.
     .sort((a, b) => normalize(a.nom).localeCompare(normalize(b.nom)));
 
   const styles = makeStyles(colors, isMobile);

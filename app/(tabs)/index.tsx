@@ -36,26 +36,33 @@ export default function AgendaScreen() {
     try {
       const data = await consultationsApi.list();
       const now = new Date();
+      // Filtrer les consultations à venir (date >= aujourd'hui) et trier par date croissante. 
       const upcoming = data
         .filter((c: Consultation) => new Date(c.dateConsultation) >= now)
+        // Trier les consultations par date de manière croissante (les plus proches en premier).
         .sort(
           (a: Consultation, b: Consultation) =>
             new Date(a.dateConsultation).getTime() - new Date(b.dateConsultation).getTime()
         )
+        // Limiter à 20 consultations pour éviter de surcharger l'affichage. 
         .slice(0, 20);
+        // Mettre à jour l'état avec les consultations à venir.
       setConsultations(upcoming);
     } catch {
       setConsultations([]);
     } finally {
+      // Arrêter les indicateurs de chargement et de rafraîchissement une fois les données chargées ou en cas d'erreur.
       setLoading(false);
       setRefreshing(false);
     }
   };
 
+  // Charger les données une seule fois au montage du composant.
   useEffect(() => { fetchData(); }, []);
+ // Recharger les données à chaque fois que l'écran est focalisé (utile si on revient sur cet écran après avoir ajouté une consultation, par exemple).
+  useFocusEffect(useCallback(() => { fetchData(); }, [])); //  useCallback avec [] est obligatoire pour useFocusEffect — il mémorise la fonction pour éviter des re-renders infinis.
 
-  useFocusEffect(useCallback(() => { fetchData(); }, []));
-
+  // Fonction de rafraîchissement déclenchée par pull-to-refresh. (tirer vers le bas sur mobile)
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
@@ -85,8 +92,10 @@ export default function AgendaScreen() {
   }
 
   const today = new Date().toDateString();
+  // Compter le nombre de consultations pour aujourd'hui en vérifiant si la clé existe dans le regroupement. Si aucune consultation n'est prévue pour aujourd'hui, le compte sera de 0.
   const todayCount = (grouped[today] || []).length;
 
+  // Appliquer le filtre pour n'afficher que les consultations d'aujourd'hui ou toutes les consultations à venir. Si le filtre est sur "today", on vérifie si la clé du jour existe dans le regroupement et on retourne uniquement ce groupe, sinon on retourne tous les groupes.
   const filteredGrouped: Record<string, Consultation[]> =
     filter === 'today'
       ? grouped[today] ? { [today]: grouped[today] } : {}

@@ -55,6 +55,7 @@ export default function ProprietairesScreen() {
     updateItem: ownersApi.update,
     deleteItem: ownersApi.delete,
     emptyForm: EMPTY_FORM,
+    // Convertit les données du formulaire en payload pour l'API. Les champs optionnels sont envoyés à null si vides.
     toPayload: (f) => ({
       nom: f.nom,
       prenom: f.prenom,
@@ -62,6 +63,7 @@ export default function ProprietairesScreen() {
       telephone: f.telephone || null,
       email: f.email || null,
     }),
+    // Convertit un propriétaire en données de formulaire. Les champs optionnels sont convertis en chaîne vide si null pour l'affichage.
     itemToForm: (o) => ({
       nom: o.nom,
       prenom: o.prenom,
@@ -69,6 +71,7 @@ export default function ProprietairesScreen() {
       telephone: o.telephone ?? '',
       email: o.email ?? '',
     }),
+    // Valide les données du formulaire avant l'envoi. Vérifie que les champs obligatoires sont remplis.
     validate: (f) => (!f.nom || !f.prenom ? 'Le nom et le prénom sont obligatoires.' : null),
     labels: {
       created: 'Propriétaire créé avec succès',
@@ -79,6 +82,7 @@ export default function ProprietairesScreen() {
   });
 
   const filtered = owners
+  // Applique le filtre de recherche sur les propriétaires. La recherche est insensible à la casse et aux accents, et vérifie le nom, prénom, téléphone et email.
     .filter((o) => {
       const n = normalize(search);
       return (
