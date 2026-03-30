@@ -69,12 +69,7 @@ export default function AnimalDetailModal({
       });
     } else {
       setEditConsultTarget(null);
-      setConsultForm({
-        dateConsultation: dateToDisplay(new Date()),
-        motif: '',
-        compteRendu: '',
-        traitements: '',
-      });
+      setConsultForm({ ...EMPTY_CONSULT_FORM, dateConsultation: dateToDisplay(new Date()) });
     }
     setConsultError('');
     setConsultModalVisible(true);
