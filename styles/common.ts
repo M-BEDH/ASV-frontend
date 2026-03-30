@@ -12,12 +12,7 @@ export function makeCommonStyles(colors: any, isMobile = false) {
     container: { flex: 1, backgroundColor: colors.background },
     addBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
     addBtnText: { color: '#fff', fontWeight: '400' as const, fontSize: isMobile ? 13 : 16 },
-    searchRow: { padding: 16, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
-    searchInput: {
-      backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
-      borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, color: colors.textPrimary,
-    },
-    list: { flex: 1, padding: 16 },
+list: { flex: 1, padding: 16 },
     empty: { paddingTop: 60 },
     emptyText: { color: colors.textMuted, fontSize: 15, textAlign: 'center' as const },
     card: {

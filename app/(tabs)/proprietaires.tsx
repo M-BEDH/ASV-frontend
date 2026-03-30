@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useCrud } from '../../hooks/useCrud';
 import AppHeader from '../../components/AppHeader';
+import SearchBar from '../../components/SearchBar';
 import ConfirmModal from '../../components/ConfirmModal';
 import FormModal from '../../components/FormModal';
 import FieldLabel from '../../components/FieldLabel';
@@ -114,16 +115,7 @@ export default function ProprietairesScreen() {
       />
 
       {isVet && (
-        <View style={styles.searchRow}>
-          <TextInput
-            style={styles.searchInput}
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Rechercher..."
-            placeholderTextColor={colors.textMuted}
-            clearButtonMode="while-editing"
-          />
-        </View>
+        <SearchBar value={search} onChangeText={setSearch} isMobile={isMobile} />
       )}
 
       <ScrollView

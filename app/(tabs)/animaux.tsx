@@ -22,6 +22,7 @@ import FormModal from '../../components/FormModal';
 import FieldLabel from '../../components/FieldLabel';
 import DateTimePickerInput from '../../components/DateTimePickerInput';
 import AnimalDetailModal from '../../components/AnimalDetailModal';
+import SearchBar from '../../components/SearchBar';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { Animal, Owner } from '../../types';
 
@@ -159,16 +160,7 @@ export default function AnimauxScreen() {
       />
 
       {!isClient && (
-        <View style={styles.searchRow}>
-          <TextInput
-            style={styles.searchInput}
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Rechercher..."
-            placeholderTextColor={colors.textMuted}
-            clearButtonMode="while-editing"
-          />
-        </View>
+        <SearchBar value={search} onChangeText={setSearch} isMobile={isMobile} />
       )}
 
       <ScrollView
