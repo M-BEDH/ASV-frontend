@@ -30,7 +30,6 @@ export default function AppHeader({ title, right, badge, clinicName, clinicNameR
     <View style={isWeb ? styles.headerWeb : styles.headerMobile}>
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
-          {/* <MaterialCommunityIcons name="pulse" size={isWeb ? 50 : 23} color={colors.primary} /> */}
             <Image
                       source={require('../assets/asv_icon.png')}
                       style={styles.logo}
@@ -74,6 +73,7 @@ function makeStyles(colors: any) {
       paddingHorizontal: 15,
       paddingTop: 56,
       paddingBottom: 12,
+      marginBottom: 12,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
       gap: 4,
@@ -83,6 +83,7 @@ function makeStyles(colors: any) {
       paddingHorizontal: 100,
       paddingTop: 10,
       paddingBottom: 16,
+      marginBottom: 20,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
       gap: 6,
