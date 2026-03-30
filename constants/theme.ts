@@ -36,7 +36,7 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     danger: '#EF4444',
     warning: '#F59E0B',
     background: '#e9e7e7c5',  
-    surface: '#c2e7f89f',
+    surface: '#f3a4a436',
     border: '#E5E7EB',
     textPrimary: '#111827',
     textSecondary: '#575b63',
