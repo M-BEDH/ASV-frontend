@@ -62,7 +62,7 @@ export default function ProprietairesScreen() {
       prenom: f.prenom,
       adresse: f.adresse || null,
       telephone: f.telephone || null,
-      email: f.email || null,
+      email: f.email,
     }),
     // Convertit un propriétaire en données de formulaire. Les champs optionnels sont convertis en chaîne vide si null pour l'affichage.
     itemToForm: (o) => ({
@@ -70,10 +70,10 @@ export default function ProprietairesScreen() {
       prenom: o.prenom,
       adresse: o.adresse ?? '',
       telephone: o.telephone ?? '',
-      email: o.email ?? '',
+      email: o.email,
     }),
     // Valide les données du formulaire avant l'envoi. Vérifie que les champs obligatoires sont remplis.
-    validate: (f) => (!f.nom || !f.prenom ? 'Le nom et le prénom sont obligatoires.' : null),
+    validate: (f) => (!f.nom || !f.prenom || !f.email ? 'Le nom, le prénom et l\'email sont obligatoires.' : null),
     labels: {
       created: 'Propriétaire créé avec succès',
       updated: 'Propriétaire modifié avec succès',
@@ -211,7 +211,7 @@ export default function ProprietairesScreen() {
           accessibilityLabel="Téléphone"
         />
 
-        <FieldLabel>Email</FieldLabel>
+        <FieldLabel required>Email</FieldLabel>
         <TextInput
           style={styles.input}
           value={form.email}
@@ -220,7 +220,7 @@ export default function ProprietairesScreen() {
           placeholderTextColor={colors.textMuted}
           keyboardType="email-address"
           autoCapitalize="none"
-          accessibilityLabel="Email"
+          accessibilityLabel="Email (requis)"
         />
 
         <FieldLabel>Adresse</FieldLabel>
