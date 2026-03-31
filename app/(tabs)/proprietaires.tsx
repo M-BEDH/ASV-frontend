@@ -211,7 +211,7 @@ export default function ProprietairesScreen() {
           accessibilityLabel="Téléphone"
         />
 
-        <FieldLabel>Email</FieldLabel>
+        <FieldLabel required>Email</FieldLabel>
         <TextInput
           style={styles.input}
           value={form.email}
@@ -220,7 +220,7 @@ export default function ProprietairesScreen() {
           placeholderTextColor={colors.textMuted}
           keyboardType="email-address"
           autoCapitalize="none"
-          accessibilityLabel="Email"
+          accessibilityLabel="Email (requis)"
         />
 
         <FieldLabel>Adresse</FieldLabel>
