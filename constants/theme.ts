@@ -53,7 +53,7 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     primaryLink: '#93C5FD',
     primaryLight: '#1E40AF',
     primaryDark: '#1E40AF',
-    secondary: '#088318',
+    secondary: '#76f186',
     danger: '#F87171',
     warning: '#FBBF24',
     background: '#111827',
