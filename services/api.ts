@@ -44,6 +44,7 @@ const request = async <T>(
   const token = await getToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': '1',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
@@ -100,6 +101,10 @@ export const authApi = {
 
 export const clinicsApi = {
   list: () => request<any[]>('/api/clinics'),
+  byEmail: (email: string) =>
+    request<{ found: boolean; clinics: { id: string; name: string; type: string }[] }>(
+      `/api/clinics/by-email?email=${encodeURIComponent(email)}`
+    ),
   update: (id: string, name: string) => request<any>(`/api/clinics/${id}`, { method: 'PUT', body: JSON.stringify({ name }) }),
 };
 
