@@ -46,6 +46,8 @@ export default function RegisterScreen() {
   const [vetOption, setVetOption] = useState<'create' | 'join'>('create');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [foundClinics, setFoundClinics] = useState<{ id: string; name: string; type: string }[] | null>(null);
 
   useEffect(() => {
     clinicsApi.list().then(setClinics).catch(() => { });
@@ -87,16 +89,40 @@ export default function RegisterScreen() {
         }
         payload.clinicId = selectedClinicId;
       } else if (role === 'client') {
-        if (!selectedClinicId) {
-          setError('Veuillez sélectionner votre établissement.');
-          setLoading(false);
-          return;
+        if (foundClinics === null) {
+          let result;
+          try {
+            result = await clinicsApi.byEmail(email);
+          } catch (e: any) {
+            setError(e.message || "Impossible de vérifier votre email.");
+            setLoading(false);
+            return;
+          }
+          if (!result.found || result.clinics.length === 0) {
+            setError("Aucun établissement trouvé pour cet email. Contactez votre clinique d'abord.");
+            setLoading(false);
+            return;
+          }
+          if (result.clinics.length === 1) {
+            payload.clinicId = result.clinics[0].id;
+          } else {
+            setFoundClinics(result.clinics);
+            setLoading(false);
+            return;
+          }
+        } else {
+          if (!selectedClinicId) {
+            setError("Veuillez sélectionner votre établissement.");
+            setLoading(false);
+            return;
+          }
+          payload.clinicId = selectedClinicId;
         }
-        payload.clinicId = selectedClinicId;
       }
 
       await authApi.register(payload);
-      router.replace('/(auth)/login');
+      setSuccess(true);
+      setTimeout(() => router.replace('/(auth)/login'), 3000);
     } catch (e: any) {
       setError(e.message || "Erreur lors de l'inscription.");
     } finally {
@@ -125,6 +151,17 @@ export default function RegisterScreen() {
         <View style={styles.card}>
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
+          {success && (
+            <View style={{ alignItems: 'center', padding: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: '600', color: colors.primary, marginBottom: 8 }}>
+                Compte créé avec succès !
+              </Text>
+              <Text style={{ color: colors.secondary, textAlign: 'center' }}>
+                Compte créé avec succès ! Redirection vers la connexion…
+              </Text>
+            </View>
+          )}
+
           <FieldLabel required>Nom complet</FieldLabel>
           <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nom Prénom" placeholderTextColor={colors.textMuted} accessibilityLabel="Nom complet (requis)" />
 
@@ -132,7 +169,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(v) => { setEmail(v); setFoundClinics(null); setSelectedClinicId(''); }}
             placeholder="votre@email.com"
             placeholderTextColor={colors.textMuted}
             keyboardType="email-address"
@@ -201,12 +238,12 @@ export default function RegisterScreen() {
             </View>
           )}
 
-          {/* Client : établissement obligatoire */}
-          {role === 'client' && (
+          {/* Client : établissement trouvé par email */}
+          {role === 'client' && foundClinics !== null && (
             <View style={styles.clinicSection}>
               <FieldLabel required>Votre établissement</FieldLabel>
               <Dropdown
-                items={clinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
+                items={foundClinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
                 value={selectedClinicId}
                 onChange={setSelectedClinicId}
                 placeholder="Choisir un établissement"
