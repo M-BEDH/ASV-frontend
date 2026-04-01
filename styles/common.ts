@@ -12,7 +12,7 @@ export function makeCommonStyles(colors: any, isMobile = false) {
     container: { flex: 1, backgroundColor: colors.background },
     addBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
     addBtnText: { color: '#fff', fontWeight: '400' as const, fontSize: isMobile ? 13 : 16 },
-    list: { flex: 1, padding: 16, width: isMobile ? '100%' as const : '80%' as const, margin: 'auto' as const },
+    list: { flex: 1, padding: 16, width: isMobile ? '100%' as const : '85%' as const, margin: 'auto' as const },
     empty: { paddingTop: 60 },
     emptyText: { color: colors.textMuted, fontSize: 15, textAlign: 'center' as const },
     card: {
