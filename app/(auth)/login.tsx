@@ -15,6 +15,7 @@ import {
 import { Link, router } from 'expo-router';
 import Dropdown from '../../components/Dropdown';
 import FieldLabel from '../../components/FieldLabel';
+import PasswordInput from '../../components/PasswordInput';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -87,13 +88,9 @@ export default function LoginScreen() {
           />
 
           <FieldLabel required>Mot de passe</FieldLabel>
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={password}
             onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor={colors.textMuted}
-            secureTextEntry
             accessibilityLabel="Mot de passe (requis)"
           />
 
