@@ -2,40 +2,13 @@ import { useState } from 'react';
 import { Platform, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../context/ThemeContext';
+import { dateToDisplay, displayToDate, fromDatetimeLocal, toDatetimeLocal } from '../utils/dateUtils';
 
 type Props = {
   value: string; // DD-MM-YYYY HH:MM  (ou DD-MM-YYYY si dateOnly)
   onChange: (value: string) => void;
   dateOnly?: boolean;
 };
-
-function toDate(display: string): Date {
-  const [datePart, timePart] = display.split(' ');
-  const [d, m, y] = (datePart || '').split('-');
-  const [h, min] = (timePart || '00:00').split(':');
-  const date = new Date(+y, +m - 1, +d, +h, +min);
-  return isNaN(date.getTime()) ? new Date() : date;
-}
-
-function toDisplay(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-// Web : datetime-local → DD-MM-YYYY HH:MM
-function fromDatetimeLocal(s: string): string {
-  if (!s) return '';
-  const [datePart, timePart] = s.split('T');
-  const [y, m, d] = datePart.split('-');
-  return `${d}-${m}-${y} ${timePart?.slice(0, 5) ?? '00:00'}`;
-}
-
-function toDatetimeLocal(display: string): string {
-  const [datePart, timePart] = display.split(' ');
-  const [d, m, y] = (datePart || '').split('-');
-  if (!y) return '';
-  return `${y}-${m}-${d}T${timePart ?? '00:00'}`;
-}
 
 export default function DateTimePickerInput({ value, onChange, dateOnly = false }: Props) {
   const { colors, theme } = useTheme();
@@ -78,7 +51,7 @@ export default function DateTimePickerInput({ value, onChange, dateOnly = false 
     );
   }
 
-  const currentDate = toDate(value);
+  const currentDate = displayToDate(value);
 
   return (
     <>
@@ -109,13 +82,13 @@ export default function DateTimePickerInput({ value, onChange, dateOnly = false 
                 setMode(null);
               } else {
                 next.setHours(currentDate.getHours(), currentDate.getMinutes());
-                onChange(toDisplay(next));
+                onChange(dateToDisplay(next));
                 setMode('time');
               }
             } else {
               const next = new Date(currentDate);
               next.setHours(selected.getHours(), selected.getMinutes());
-              onChange(toDisplay(next));
+              onChange(dateToDisplay(next));
               setMode(null);
             }
           }}
