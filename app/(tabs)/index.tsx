@@ -18,6 +18,7 @@ import { TextInput } from 'react-native';
 import AppHeader from '../../components/AppHeader';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { Consultation } from '../../types';
+import { roleLabel, roleBgColor } from '../../utils/roles';
 
 export default function AgendaScreen() {
   const { user, logout, isVet, refreshUser } = useAuth();
@@ -253,21 +254,6 @@ export default function AgendaScreen() {
   );
 }
 
-function roleLabel(role?: string | null) {
-  if (role === 'veterinaire') return 'Vétérinaire';
-  if (role === 'assistant') return 'Assistant(e)';
-  if (role === 'responsable') return 'Responsable';
-  if (role === 'benevole') return 'Bénévole';
-  return 'Client';
-}
-
-function roleBgColor(role?: string | null, colors?: any) {
-  if (role === 'veterinaire') return colors.roleVet;
-  if (role === 'assistant') return colors.roleAssistant;
-  if (role === 'responsable') return colors.roleResponsable;
-  if (role === 'benevole') return colors.roleBenevole;
-  return colors.roleClient;
-}
 
 function makeStyles(colors: any, theme: 'light' | 'dark') {
   return StyleSheet.create({

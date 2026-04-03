@@ -17,21 +17,10 @@ import { authApi, clinicsApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import Dropdown from '../../components/Dropdown';
 import FieldLabel from '../../components/FieldLabel';
-import type { Clinic, EtablissementType, UserRole } from '../../types';
+import PasswordInput from '../../components/PasswordInput';
+import type { Clinic, UserRole, EtablissementType } from '../../types';
+import { userRoles, etablissementTypes } from '../../constants/enums';
 
-const ROLES: { value: UserRole; label: string }[] = [
-  { value: 'veterinaire', label: 'Vétérinaire' },
-  { value: 'responsable', label: 'Responsable / Directeur' },
-  { value: 'assistant', label: 'Assistant(e)' },
-  { value: 'benevole', label: 'Bénévole' },
-  { value: 'client', label: 'Client' },
-];
-
-const ETABLISSEMENT_TYPES: { value: EtablissementType; label: string }[] = [
-  { value: 'clinique', label: 'Clinique' },
-  { value: 'refuge', label: 'Refuge' },
-  { value: 'association', label: 'Association' },
-];
 
 export default function RegisterScreen() {
   const { colors } = useTheme();
@@ -56,6 +45,11 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     if (!name || !email || !password) {
       setError('Nom, email et mot de passe sont obligatoires.');
+      return;
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+    if (!passwordRegex.test(password)) {
+      setError('Le mot de passe doit contenir au moins 6 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
       return;
     }
     setError('');
@@ -153,11 +147,11 @@ export default function RegisterScreen() {
 
           {success && (
             <View style={{ alignItems: 'center', padding: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: '600', color: colors.primary, marginBottom: 8 }}>
+             <Text style={{ fontSize: 16, fontWeight: '600', color: colors.success, marginBottom: 8 }}>
                 Compte créé avec succès !
               </Text>
-              <Text style={{ color: colors.secondary, textAlign: 'center' }}>
-                Compte créé avec succès ! Redirection vers la connexion…
+              <Text style={{ color: colors.textMuted, textAlign: 'center', width: '100%' }}>
+                Redirection vers la connexion…
               </Text>
             </View>
           )}
@@ -180,7 +174,7 @@ export default function RegisterScreen() {
 
           <FieldLabel required>Rôle</FieldLabel>
           <Dropdown
-            items={ROLES}
+            items={userRoles}
             value={role}
             onChange={(v) => setRole(v as UserRole)}
             placeholder="Choisir un rôle"
@@ -201,7 +195,7 @@ export default function RegisterScreen() {
                 <>
                   <FieldLabel required>Type d'établissement</FieldLabel>
                   <Dropdown
-                    items={ETABLISSEMENT_TYPES}
+                    items={etablissementTypes}
                     value={newClinicType}
                     onChange={(v) => setNewClinicType(v as EtablissementType)}
                     placeholder="Choisir un type"
@@ -252,13 +246,9 @@ export default function RegisterScreen() {
           )}
 
           <FieldLabel required>Mot de passe</FieldLabel>
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={password}
             onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor={colors.textMuted}
-            secureTextEntry
             accessibilityLabel="Mot de passe (requis)"
           />
 
