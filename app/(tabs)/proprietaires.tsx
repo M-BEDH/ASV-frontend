@@ -12,6 +12,7 @@ import ConfirmModal from '../../components/ConfirmModal';
 import FormModal from '../../components/FormModal';
 import FieldLabel from '../../components/FieldLabel';
 import type { Owner } from '../../types';
+import { normalize } from '../../utils/normalizeText';
 
 type FormData = {
   nom: string;
@@ -23,7 +24,6 @@ type FormData = {
 
 const EMPTY_FORM: FormData = { nom: '', prenom: '', adresse: '', telephone: '', email: '' };
 
-const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 export default function ProprietairesScreen() {
   const { user, isVet, isClient, isReadOnly } = useAuth();
@@ -105,10 +105,6 @@ export default function ProprietairesScreen() {
           isVet && !isReadOnly ? (
             <TouchableOpacity style={styles.addBtn} onPress={() => openCreate()}>
               <Text style={styles.addBtnText}>+ Ajouter</Text>
-            </TouchableOpacity>
-          ) : isClient && owners.length === 0 ? (
-            <TouchableOpacity style={styles.addBtn} onPress={() => openCreate({ email: user?.email ?? '' })}>
-              <Text style={styles.addBtnText}>Créer le profil</Text>
             </TouchableOpacity>
           ) : undefined
         }

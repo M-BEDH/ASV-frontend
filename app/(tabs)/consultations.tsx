@@ -14,6 +14,8 @@ import Dropdown from '../../components/Dropdown';
 import DateTimePickerInput from '../../components/DateTimePickerInput';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { Consultation, Animal } from '../../types';
+import { dateToDisplay, toIsoDatetime } from '../../utils/dateUtils';
+import { consultationMotifs } from '../../constants/consultationMotifs';
 
 type FormData = {
   animalId: string;
@@ -75,7 +77,7 @@ export default function ConsultationsScreen() {
     // Convertit une consultation en données de formulaire. La date est convertie au format local pour l'affichage.
     itemToForm: (c) => ({
       animalId: c.animal?.id ?? '',
-      dateConsultation: formatDatetimeLocal(new Date(c.dateConsultation)),
+      dateConsultation: dateToDisplay(new Date(c.dateConsultation)),
       motif: c.motif,
       compteRendu: c.compteRendu ?? '',
       traitements: c.traitements ?? '',
@@ -113,7 +115,7 @@ export default function ConsultationsScreen() {
       <AppHeader
         title="Consultations"
         right={isVet && !isReadOnly ? (
-          <TouchableOpacity style={styles.addBtn} onPress={() => openCreate({ dateConsultation: formatDatetimeLocal(new Date()) })}>
+          <TouchableOpacity style={styles.addBtn} onPress={() => openCreate({ dateConsultation: dateToDisplay(new Date()) })}>
             <Text style={styles.addBtnText}>+ Ajouter</Text>
           </TouchableOpacity>
         ) : undefined}
@@ -187,12 +189,7 @@ export default function ConsultationsScreen() {
 
         <FieldLabel required>Motif</FieldLabel>
         <Dropdown
-          items={[
-            { label: 'Vaccin', value: 'Vaccin' },
-            { label: 'Consultation', value: 'Consultation' },
-            { label: 'Urgence', value: 'Urgence' },
-            { label: 'Autre', value: 'Autre' },
-          ]}
+          items={consultationMotifs}
           value={form.motif}
           onChange={(v) => setForm({ ...form, motif: v })}
           placeholder="Choisir un motif"
@@ -279,17 +276,6 @@ function ConsultCard({ c, isVet, isMobile, colors, onEdit, onDelete, styles }: {
   );
 }
 
-function formatDatetimeLocal(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function toIsoDatetime(display: string): string {
-  const [datePart, timePart = '00:00'] = display.split(' ');
-  const [d, m, y] = datePart.split('-');
-  const localDate = new Date(`${y}-${m}-${d}T${timePart}:00`);
-  return localDate.toISOString().slice(0, 16).replace('T', ' ');
-}
 
 function makeStyles(colors: any, isMobile = false) {
   return StyleSheet.create({

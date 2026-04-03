@@ -25,6 +25,8 @@ import AnimalDetailModal from '../../components/AnimalDetailModal';
 import SearchBar from '../../components/SearchBar';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { Animal, Owner } from '../../types';
+import { toDisplayDate, toIsoDate } from '../../utils/dateUtils';
+import { normalize } from '../../utils/normalizeText';
 
 type FormData = {
   nom: string;
@@ -130,7 +132,6 @@ export default function AnimauxScreen() {
   // ─── Rendu ────────────────────────────────────────────────────────────────
 
   // Normalise une chaîne pour la recherche en supprimant les accents et en convertissant en minuscules. Permet une recherche insensible à la casse et aux accents.
-  const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const filtered = animals
   // Applique le filtre de recherche sur les animaux. La recherche est insensible à la casse et aux accents, et vérifie le nom, l'espèce, la race et le nom du propriétaire.
@@ -286,15 +287,6 @@ export default function AnimauxScreen() {
   );
 }
 
-function toDisplayDate(iso: string): string {
-  const [y, m, d] = iso.split('-');
-  return `${d}-${m}-${y}`;
-}
-
-function toIsoDate(display: string): string {
-  const [d, m, y] = display.split('-');
-  return `${y}-${m}-${d}`;
-}
 
 function makeStyles(colors: any, isMobile: boolean) {
   return StyleSheet.create({

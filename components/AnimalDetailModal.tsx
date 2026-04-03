@@ -22,6 +22,8 @@ import Dropdown from './Dropdown';
 import DateTimePickerInput from './DateTimePickerInput';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { Animal, Owner } from '../types';
+import { dateToDisplay, toIsoDatetime } from '../utils/dateUtils';
+import { consultationMotifs } from '../constants/consultationMotifs';
 
 type Props = {
   animal: Animal | null;
@@ -53,10 +55,6 @@ export default function AnimalDetailModal({
   const [consultError, setConsultError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<any | null>(null);
 
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const dateToDisplay = (d: Date) =>
-    `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-
   const openConsultModal = (consult?: any) => {
     if (consult) {
       setEditConsultTarget(consult);
@@ -83,10 +81,7 @@ export default function AnimalDetailModal({
     setConsultSaving(true);
     setConsultError('');
     try {
-      const [d, m, y] = consultForm.dateConsultation.split(' ')[0].split('-');
-      const time = consultForm.dateConsultation.split(' ')[1] ?? '00:00';
-      const localDate = new Date(`${y}-${m}-${d}T${time}:00`);
-      const isoDate = localDate.toISOString().slice(0, 16).replace('T', ' ');
+      const isoDate = toIsoDatetime(consultForm.dateConsultation);
       const payload = {
         animalId: animal!.id,
         dateConsultation: isoDate,
@@ -262,12 +257,7 @@ export default function AnimalDetailModal({
 
         <FieldLabel required>Motif</FieldLabel>
         <Dropdown
-          items={[
-            { label: 'Vaccin', value: 'Vaccin' },
-            { label: 'Consultation', value: 'Consultation' },
-            { label: 'Urgence', value: 'Urgence' },
-            { label: 'Autre', value: 'Autre' },
-          ]}
+          items={consultationMotifs}
           value={consultForm.motif}
           onChange={(v) => setConsultForm({ ...consultForm, motif: v })}
           placeholder="Choisir un motif"
