@@ -29,7 +29,7 @@ export default function SearchBar({ value, onChangeText, placeholder = 'Recherch
 function makeStyles(colors: any, isMobile: boolean) {
   return StyleSheet.create({
     searchRow: {
-      width: isMobile ? '100%' : '50%',
+      width: isMobile ? '100%' : '70%',
       marginHorizontal: isMobile ? undefined : 'auto',
       padding: 16,
       borderRadius: 10,
