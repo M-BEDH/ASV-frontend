@@ -24,7 +24,7 @@ export interface Owner {
   prenom: string;
   adresse: string | null;
   telephone: string | null;
-  email: string | null;
+  email: string;
   clinicId: string | null;
   createdAt: string;
 }
