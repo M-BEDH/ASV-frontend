@@ -134,7 +134,7 @@ function makeStyles(colors: any) {
     container: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 48 },
     header: { alignItems: 'center', marginBottom: 24, width: '100%', maxWidth: 500 },
-    title: { fontSize: 36, fontWeight: 'bold', color: colors.primary, fontFamily: 'Merriweather' },
+    title: { fontSize: 36, fontWeight: 'bold', color: colors.primary },
     logo: { width: 100, height: 100, marginTop: 12 },
     subtitle: { width: '100%', textAlign: 'center', fontSize: 14, color: colors.textSecondary, marginTop: 10 },
     card: {
