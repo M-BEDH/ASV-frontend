@@ -97,6 +97,14 @@ export default function TabsLayout() {
           ),
         }}
       />
+       <Tabs.Screen
+        name="mentionLegales"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="file-document-outline" label="Mentions Légales" size={isMobile ? 20 : 22} focused={focused} isMobile={isMobile} colors={colors} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
