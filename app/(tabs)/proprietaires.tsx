@@ -238,7 +238,7 @@ function makeStyles(colors: any, isMobile: boolean) {
   return StyleSheet.create({
     ...makeCommonStyles(colors, isMobile),
     cardLeft: { flex: 1, gap: 4 },
-    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
-    cardInfo: { fontSize: 13, color: colors.textSecondary },
+    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap'},
+    cardInfo: { fontSize: 13, color: colors.textSecondary, width: '100%' },
   });
 }
