@@ -32,6 +32,13 @@ if ($choix -eq "2") {
     $env:REACT_NATIVE_PACKAGER_HOSTNAME = $ip
     npx expo start --tunnel
 } else {
+    # Met à jour .env.local avec l'IP locale
+    $envPath = ".\.env.local"
+    $content = Get-Content $envPath
+    $content = $content -replace 'EXPO_PUBLIC_API_URL=.*', "EXPO_PUBLIC_API_URL=http://${ip}:8080"
+    $content | Set-Content $envPath
+    Write-Host "URL API : http://${ip}:8080"
+
     $env:REACT_NATIVE_PACKAGER_HOSTNAME = $ip
-    npx expo start
+    npx expo start --clear
 }
