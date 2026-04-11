@@ -144,7 +144,7 @@ function makeStyles(colors: any) {
       marginTop: 10,
     },
     badgeText: { fontSize: 11, fontWeight: '600' },
-    clinicName: { fontSize: 13, fontWeight: '400', color: '#888' },
+    clinicName: { fontSize: 13, fontWeight: '400', color: '#888', marginTop: 10 },
     logo: { width: 50, height: 50, marginTop: 5, marginLeft: -8 },
   });
   
