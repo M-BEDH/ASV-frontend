@@ -15,38 +15,23 @@ import {
 import { Link, router } from 'expo-router';
 import { authApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
-import Dropdown from '../../components/Dropdown';
 import FieldLabel from '../../components/FieldLabel';
 import PasswordInput from '../../components/PasswordInput';
-import type { EtablissementType } from '../../types';
-import { etablissementTypes } from '../../constants/enums';
 
-type Path = 'responsable' | 'invite';
 type PendingAccount = { name: string; role: string };
-
-const PATH_OPTIONS = [
-  { value: 'responsable', label: 'Responsable / Directeur' },
-  { value: 'invite',      label: "J'ai reçu une invitation" },
-];
 
 export default function RegisterScreen() {
   const { colors } = useTheme();
-  const [path, setPath] = useState<Path | ''>('');
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [newClinicName, setNewClinicName] = useState('');
-  const [newClinicType, setNewClinicType] = useState<EtablissementType>('clinique');
   const [pendingAccount, setPendingAccount] = useState<PendingAccount | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Debounce sur l'email — uniquement actif sur le chemin "invitation"
+  // Debounce sur l'email — vérifie l'existence d'un pré-compte
   useEffect(() => {
-    if (path !== 'invite') return;
-
     setPendingAccount(null);
     if (!/\S+@\S+\.\S+/.test(email)) return;
 
@@ -66,11 +51,15 @@ export default function RegisterScreen() {
     }, 500);
 
     return () => { clearTimeout(timer); setCheckingEmail(false); };
-  }, [email, path]);
+  }, [email]);
 
   const handleRegister = async () => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
 
+    if (!pendingAccount) {
+      setError('Aucun compte trouvé pour cet email. Contactez votre administrateur.');
+      return;
+    }
     if (!password) { setError('Le mot de passe est obligatoire.'); return; }
     if (!passwordRegex.test(password)) {
       setError('Le mot de passe doit contenir au moins 6 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
@@ -81,30 +70,11 @@ export default function RegisterScreen() {
     setLoading(true);
 
     try {
-      const payload: any = { email, password };
-
-      if (path === 'invite') {
-        // Activation pré-compte : email + password suffisent
-        if (!pendingAccount) {
-          setError('Aucun compte trouvé pour cet email. Vérifiez avec votre responsable.');
-          setLoading(false);
-          return;
-        }
-      } else {
-        // Inscription responsable
-        if (!name) { setError('Le nom est obligatoire.'); setLoading(false); return; }
-        if (!newClinicName.trim()) { setError("Veuillez saisir un nom d'établissement."); setLoading(false); return; }
-        payload.name = name;
-        payload.role = 'responsable';
-        payload.clinicName = newClinicName.trim();
-        payload.clinicType = newClinicType;
-      }
-
-      await authApi.register(payload);
+      await authApi.register({ email, password });
       setSuccess(true);
       setTimeout(() => router.replace('/(auth)/login'), 3000);
     } catch (e: any) {
-      setError(e.message || "Erreur lors de l'inscription.");
+      setError(e.message || "Erreur lors de l'activation.");
     } finally {
       setLoading(false);
     }
@@ -135,97 +105,39 @@ export default function RegisterScreen() {
             </View>
           )}
 
-          {/* ── Choix du parcours ── */}
-          <FieldLabel required>Je suis</FieldLabel>
-          <Dropdown
-            items={PATH_OPTIONS}
-            value={path}
-            onChange={(v) => { setPath(v as Path); setEmail(''); setPendingAccount(null); setError(''); }}
-            placeholder="Choisir…"
+          {/* ── Email ── */}
+          <FieldLabel required>Email</FieldLabel>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="votre@email.com"
+            placeholderTextColor={colors.textMuted}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            accessibilityLabel="Email (requis)"
           />
+          {checkingEmail && <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 4 }} />}
 
-          {/* ── Parcours Responsable ── */}
-          {path === 'responsable' && (
-            <>
-              <FieldLabel required>Nom complet</FieldLabel>
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="Nom Prénom"
-                placeholderTextColor={colors.textMuted}
-                accessibilityLabel="Nom complet (requis)"
-              />
-
-              <FieldLabel required>Email</FieldLabel>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="votre@email.com"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                accessibilityLabel="Email (requis)"
-              />
-
-              <FieldLabel required>Type d'établissement</FieldLabel>
-              <Dropdown
-                items={etablissementTypes}
-                value={newClinicType}
-                onChange={(v) => setNewClinicType(v as EtablissementType)}
-                placeholder="Choisir un type"
-              />
-
-              <FieldLabel required>Nom de l'établissement</FieldLabel>
-              <TextInput
-                style={styles.input}
-                value={newClinicName}
-                onChangeText={setNewClinicName}
-                placeholder="Nom de votre établissement"
-                placeholderTextColor={colors.textMuted}
-              />
-            </>
+          {pendingAccount && (
+            <View style={styles.pendingBox}>
+              <Text style={styles.pendingTitle}>Compte trouvé</Text>
+              <Text style={styles.pendingInfo}>Nom : {pendingAccount.name}</Text>
+              <Text style={[styles.pendingInfo, { marginTop: 8 }]}>
+                Définissez votre mot de passe pour activer votre compte.
+              </Text>
+            </View>
           )}
 
-          {/* ── Parcours Invitation ── */}
-          {path === 'invite' && (
-            <>
-              <FieldLabel required>Email</FieldLabel>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="votre@email.com"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                accessibilityLabel="Email (requis)"
-              />
-              {checkingEmail && <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 4 }} />}
-
-              {pendingAccount && (
-                <View style={styles.pendingBox}>
-                  <Text style={styles.pendingTitle}>Compte trouvé</Text>
-                  <Text style={styles.pendingInfo}>Nom : {pendingAccount.name}</Text>
-                  <Text style={[styles.pendingInfo, { marginTop: 8 }]}>
-                    Définissez votre mot de passe pour activer votre compte.
-                  </Text>
-                </View>
-              )}
-
-              {email && !checkingEmail && !pendingAccount && /\S+@\S+\.\S+/.test(email) && (
-                <Text style={styles.notFoundHint}>
-                  Aucun compte trouvé pour cet email. Vérifiez avec votre responsable.
-                </Text>
-              )}
-            </>
+          {email && !checkingEmail && !pendingAccount && /\S+@\S+\.\S+/.test(email) && (
+            <Text style={styles.notFoundHint}>
+              Aucun compte trouvé pour cet email. Contactez votre administrateur.
+            </Text>
           )}
 
-          {/* ── Mot de passe — visible seulement si chemin choisi ── */}
-          {(path === 'responsable' || (path === 'invite' && pendingAccount)) && (
+          {/* ── Mot de passe — visible uniquement si pré-compte trouvé ── */}
+          {pendingAccount && (
             <>
               <FieldLabel required>Mot de passe</FieldLabel>
               <PasswordInput
@@ -242,9 +154,7 @@ export default function RegisterScreen() {
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.buttonText}>
-                    {path === 'invite' ? 'Activer mon compte' : 'Créer mon compte'}
-                  </Text>
+                  <Text style={styles.buttonText}>Activer mon compte</Text>
                 )}
               </TouchableOpacity>
             </>
