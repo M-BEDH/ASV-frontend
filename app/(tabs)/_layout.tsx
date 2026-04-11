@@ -33,7 +33,7 @@ function TabIcon({
 }
 
 export default function TabsLayout() {
-  const { user, loading, isClient } = useAuth();
+  const { user, loading, isClient, isResponsable } = useAuth();
   const { colors } = useTheme();
   const { isMobile } = useBreakpoint();
 
@@ -94,6 +94,15 @@ export default function TabsLayout() {
               isMobile={isMobile}
               colors={colors}
             />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="equipe"
+        options={{
+          href: isResponsable ? undefined : null,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="account-group-outline" label="Équipe" size={isMobile ? 24 : 26} focused={focused} isMobile={isMobile} colors={colors} />
           ),
         }}
       />
