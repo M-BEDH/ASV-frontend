@@ -1,11 +1,9 @@
 import type { UserRole, EtablissementType } from '../types';
 
+// Seul le responsable peut créer son compte librement.
+// Collaborateurs et clients sont ajoutés par le responsable — ils activent leur compte via cet écran.
 export const userRoles: { value: UserRole; label: string }[] = [
-  { value: 'veterinaire', label: 'Vétérinaire' },
   { value: 'responsable', label: 'Responsable / Directeur' },
-  { value: 'assistant', label: 'Assistant(e)' },
-  { value: 'benevole', label: 'Bénévole' },
-  { value: 'client', label: 'Client' },
 ];
 
 export const etablissementTypes: { value: EtablissementType; label: string }[] = [
