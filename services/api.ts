@@ -89,6 +89,7 @@ export const authApi = {
   },
 
   me: () => request<any>('/api/auth/me'),
+  checkPending: (email: string) => request<{ pending: boolean; name?: string; role?: string }>(`/api/auth/check-pending?email=${encodeURIComponent(email)}`),
 
   logout: async () => {
     await removeToken();
@@ -127,6 +128,15 @@ export const ownersApi = {
   create: (data: any) => request<any>('/api/owners', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: any) => request<any>(`/api/owners/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) => request<void>(`/api/owners/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+export const usersApi = {
+  list: () => request<any[]>('/api/users'),
+  create: (data: { name: string; email: string; role: string }) => request<any>('/api/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateRole: (id: string, role: string) => request<any>(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify({ role }) }),
+  delete: (id: string) => request<void>(`/api/users/${id}`, { method: 'DELETE' }),
 };
 
 // ─── Consultations ────────────────────────────────────────────────────────────
