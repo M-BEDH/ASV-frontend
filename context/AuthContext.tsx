@@ -11,6 +11,7 @@ interface AuthContextType {
   isVet: boolean;
   isClient: boolean;
   isReadOnly: boolean;
+  isResponsable: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -58,10 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isVet = user?.role === 'veterinaire' || user?.role === 'assistant' || user?.role === 'responsable';
   const isClient = user?.role === 'client';
-  const isReadOnly = user?.role === 'benevole';
+  // Bénévole en clinique = lecture seule ; bénévole en refuge/association = peut gérer les animaux                                                                                                  
+  const isReadOnly = user?.role === 'benevole' && !['refuge', 'association'].includes(user?.clinicType ?? '');   
+  const isResponsable = user?.role === 'responsable';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, isVet, isClient, isReadOnly }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, isVet, isClient, isReadOnly, isResponsable }}>
       {children}
     </AuthContext.Provider>
   );
