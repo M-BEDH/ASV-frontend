@@ -31,7 +31,7 @@ export default function AgendaScreen() {
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [clinicModalVisible, setClinicModalVisible] = useState(false);
   const [clinicNameInput, setClinicNameInput] = useState('');
-  const canEditClinic = user?.role === 'responsable' || user?.role === 'veterinaire';
+  const canEditClinic = user?.role === 'responsable';
 
   const fetchData = async () => {
     try {
@@ -104,7 +104,7 @@ export default function AgendaScreen() {
 
   const sectionLabel = filter === 'today' ? "Aujourd'hui" : "Prochains rendez-vous";
 
-  const styles = makeStyles(colors, theme);
+  const styles = makeStyles(colors, theme, isMobile);
 
   return (
     <View style={styles.container}>
@@ -156,9 +156,11 @@ export default function AgendaScreen() {
       </Modal>
 
       <ScrollView
-        style={[styles.scroll, { paddingHorizontal: listPadding }]}
+        style={styles.scroll}
+        contentContainerStyle={{ paddingHorizontal: listPadding }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
+        <View style={styles.list}>
         {/* Stats (vétérinaire/assistant uniquement) */}
         {isVet && (
           <View style={styles.statsRow}>
@@ -223,7 +225,7 @@ export default function AgendaScreen() {
                           {c.animal?.nom ?? '—'}{' '}
                           <Text style={styles.consultEspece}>({c.animal?.espece ?? ''})</Text>
                         </Text>
-                        <Text style={styles.consultMotif}>{c.motif}</Text>
+                        <Text style={styles.consultMotif} numberOfLines={2}>{c.motif}</Text>
                         {isVet && c.veterinaire && (
                           <Text style={{ fontSize: 12, color: colors.primary }}>Dr {c.veterinaire.name}</Text>
                         )}
@@ -234,7 +236,7 @@ export default function AgendaScreen() {
                           {c.animal?.nom ?? '—'}{' '}
                           <Text style={styles.consultEspece}>({c.animal?.espece ?? ''})</Text>
                         </Text>
-                        <Text style={styles.consultMotif}>{c.motif}</Text>
+                        <Text style={styles.consultMotif} numberOfLines={1}>{c.motif}</Text>
                         {isVet && c.veterinaire && (
                           <View style={styles.consultVet}>
                             <MaterialCommunityIcons name="stethoscope" size={13} color={colors.primary} />
@@ -249,15 +251,17 @@ export default function AgendaScreen() {
             );
           })
         )}
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 
-function makeStyles(colors: any, theme: 'light' | 'dark') {
+function makeStyles(colors: any, theme: 'light' | 'dark', isMobile: boolean) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
+    list: { width: isMobile ? '100%' : '72%', margin: 'auto' },
     logoutBtn: {
       paddingHorizontal: 12,
       paddingVertical: 7,
