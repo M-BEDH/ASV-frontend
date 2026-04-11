@@ -5,8 +5,12 @@ export interface AuthUser {
   email: string;
   name: string;
   role: UserRole;
-  clinicId: string | null;
-  clinicName: string | null;
+  // Staff (vétérinaire, responsable, assistant, bénévole)
+  clinicId?: string | null;
+  clinicName?: string | null;
+  clinicType?: string | null;
+  // Client uniquement
+  clinicIds?: string[];
 }
 
 export type EtablissementType = 'clinique' | 'refuge' | 'association';
@@ -25,7 +29,16 @@ export interface Owner {
   adresse: string | null;
   telephone: string | null;
   email: string;
-  clinicId: string | null;
+  clinicIds: string[];
+  createdAt: string;
+}
+
+export interface StaffUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  pending: boolean;
   createdAt: string;
 }
 
