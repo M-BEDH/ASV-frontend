@@ -18,7 +18,7 @@ export default function AppHeader({ title, right, badge, clinicName, clinicNameR
   const themeBtn = (
     <TouchableOpacity
       onPress={toggleTheme}
-      style={[styles.themeBtn, !isWeb && { marginTop: 20, marginLeft: -5 }]}
+      style={styles.themeBtn}
       accessibilityRole="button"
       accessibilityLabel={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
     >
@@ -40,26 +40,28 @@ export default function AppHeader({ title, right, badge, clinicName, clinicNameR
           <Text style={[styles.brand, { fontSize: isWeb ? 38 : 16 }]}>Suivi Vétérinaire</Text>
         </View>
         <View style={styles.actions}>
-          {themeBtn}
           {right}
         </View>
       </View>
       {(title || badge) ? (
         <View style={styles.titleRow}>
-          {title ? <Text style={[styles.title, isWeb && { fontSize: 20 }]}>{title}</Text> : null}
-          <View style={styles.badgeRow}>
-            {badge && (
-              <View style={[styles.badge, { backgroundColor: badge.bgColor }]}>
-                <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
-              </View>
-            )}
-            {clinicName && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={styles.clinicName}>{clinicName}</Text>
-                {clinicNameRight}
-              </View>
-            )}
+          <View style={styles.titleBlock}>
+            {title ? <Text style={[styles.title, isWeb && { fontSize: 20 }]}>{title}</Text> : null}
+            <View style={styles.badgeRow}>
+              {badge && (
+                <View style={[styles.badge, { backgroundColor: badge.bgColor }]}>
+                  <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
+                </View>
+              )}
+              {clinicName && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={styles.clinicName}>{clinicName}</Text>
+                  {clinicNameRight}
+                </View>
+              )}
+            </View>
           </View>
+          {themeBtn}
         </View>
       ) : null}
     </View>
@@ -101,24 +103,29 @@ function makeStyles(colors: any) {
     brand: {
       fontWeight: '600',
       color: colors.primary,
-      fontFamily: 'serif',
+      // fontFamily: 'serif',
     },
     titleRow: {
-      alignItems: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    titleBlock: {
+      flex: 1,
       gap: 4,
     },
     title: {
       fontSize: 14,
       fontWeight: '700',
       color: colors.textPrimary,
-      fontFamily: 'serif',
+      flexShrink: 1,
     },
     actions: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap:10 ,
-      bottom: -35,
-      left: -20,
+      gap: 10,
+      // bottom: -35,
+      // left: -20,
     },
     themeBtn: {
       width: 36,
@@ -134,6 +141,7 @@ function makeStyles(colors: any) {
       paddingHorizontal: 6,
       paddingVertical: 3,
       borderRadius: 3,
+      marginTop: 10,
     },
     badgeText: { fontSize: 11, fontWeight: '600' },
     clinicName: { fontSize: 13, fontWeight: '400', color: '#888' },
