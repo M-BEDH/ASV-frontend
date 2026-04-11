@@ -13,105 +13,91 @@ import {
 } from 'react-native';
 
 import { Link, router } from 'expo-router';
-import { authApi, clinicsApi } from '../../services/api';
+import { authApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import Dropdown from '../../components/Dropdown';
 import FieldLabel from '../../components/FieldLabel';
 import PasswordInput from '../../components/PasswordInput';
-import type { Clinic, UserRole, EtablissementType } from '../../types';
-import { userRoles, etablissementTypes } from '../../constants/enums';
+import type { EtablissementType } from '../../types';
+import { etablissementTypes } from '../../constants/enums';
 
+type Path = 'responsable' | 'invite';
+type PendingAccount = { name: string; role: string };
+
+const PATH_OPTIONS = [
+  { value: 'responsable', label: 'Responsable / Directeur' },
+  { value: 'invite',      label: "J'ai reçu une invitation" },
+];
 
 export default function RegisterScreen() {
   const { colors } = useTheme();
+  const [path, setPath] = useState<Path | ''>('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('client');
-  const [clinics, setClinics] = useState<Clinic[]>([]);
-  const [selectedClinicId, setSelectedClinicId] = useState('');
   const [newClinicName, setNewClinicName] = useState('');
   const [newClinicType, setNewClinicType] = useState<EtablissementType>('clinique');
-  const [vetOption, setVetOption] = useState<'create' | 'join'>('create');
+  const [pendingAccount, setPendingAccount] = useState<PendingAccount | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [foundClinics, setFoundClinics] = useState<{ id: string; name: string; type: string }[] | null>(null);
 
+  // Debounce sur l'email — uniquement actif sur le chemin "invitation"
   useEffect(() => {
-    clinicsApi.list().then(setClinics).catch(() => { });
-  }, []);
+    if (path !== 'invite') return;
+
+    setPendingAccount(null);
+    if (!/\S+@\S+\.\S+/.test(email)) return;
+
+    setCheckingEmail(true);
+    const timer = setTimeout(async () => {
+      try {
+        const result = await authApi.checkPending(email);
+        setPendingAccount(result.pending
+          ? { name: result.name!, role: result.role! }
+          : null
+        );
+      } catch {
+        setPendingAccount(null);
+      } finally {
+        setCheckingEmail(false);
+      }
+    }, 500);
+
+    return () => { clearTimeout(timer); setCheckingEmail(false); };
+  }, [email, path]);
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      setError('Nom, email et mot de passe sont obligatoires.');
-      return;
-    }
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+
+    if (!password) { setError('Le mot de passe est obligatoire.'); return; }
     if (!passwordRegex.test(password)) {
       setError('Le mot de passe doit contenir au moins 6 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
       return;
     }
+
     setError('');
     setLoading(true);
 
     try {
-      const payload: any = { name, email, password, role };
+      const payload: any = { email, password };
 
-      if (role === 'veterinaire' || role === 'responsable') {
-        if (vetOption === 'create') {
-          if (!newClinicName.trim()) {
-            setError("Veuillez saisir un nom d'établissement.");
-            setLoading(false);
-            return;
-          }
-          payload.clinicName = newClinicName.trim();
-          payload.clinicType = newClinicType;
-        } else {
-          if (!selectedClinicId) {
-            setError('Veuillez sélectionner un établissement.');
-            setLoading(false);
-            return;
-          }
-          payload.clinicId = selectedClinicId;
-        }
-      } else if (role === 'assistant' || role === 'benevole') {
-        if (!selectedClinicId) {
-          setError('Veuillez sélectionner votre établissement.');
+      if (path === 'invite') {
+        // Activation pré-compte : email + password suffisent
+        if (!pendingAccount) {
+          setError('Aucun compte trouvé pour cet email. Vérifiez avec votre responsable.');
           setLoading(false);
           return;
         }
-        payload.clinicId = selectedClinicId;
-      } else if (role === 'client') {
-        if (foundClinics === null) {
-          let result;
-          try {
-            result = await clinicsApi.byEmail(email);
-          } catch (e: any) {
-            setError(e.message || "Impossible de vérifier votre email.");
-            setLoading(false);
-            return;
-          }
-          if (!result.found || result.clinics.length === 0) {
-            setError("Aucun établissement trouvé pour cet email. Contactez votre clinique d'abord.");
-            setLoading(false);
-            return;
-          }
-          if (result.clinics.length === 1) {
-            payload.clinicId = result.clinics[0].id;
-          } else {
-            setFoundClinics(result.clinics);
-            setLoading(false);
-            return;
-          }
-        } else {
-          if (!selectedClinicId) {
-            setError("Veuillez sélectionner votre établissement.");
-            setLoading(false);
-            return;
-          }
-          payload.clinicId = selectedClinicId;
-        }
+      } else {
+        // Inscription responsable
+        if (!name) { setError('Le nom est obligatoire.'); setLoading(false); return; }
+        if (!newClinicName.trim()) { setError("Veuillez saisir un nom d'établissement."); setLoading(false); return; }
+        payload.name = name;
+        payload.role = 'responsable';
+        payload.clinicName = newClinicName.trim();
+        payload.clinicType = newClinicType;
       }
 
       await authApi.register(payload);
@@ -127,18 +113,11 @@ export default function RegisterScreen() {
   const styles = makeStyles(colors);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>Suivi Vétérinaire</Text>
-          <Image
-            source={require('../../assets/asv_icon.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <Image source={require('../../assets/asv_icon.png')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.subtitle}>Créer un compte</Text>
         </View>
 
@@ -147,135 +126,139 @@ export default function RegisterScreen() {
 
           {success && (
             <View style={{ alignItems: 'center', padding: 16 }}>
-             <Text style={{ fontSize: 16, fontWeight: '600', color: colors.success, marginBottom: 8 }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.success, marginBottom: 8 }}>
                 Compte créé avec succès !
               </Text>
-              <Text style={{ color: colors.textMuted, textAlign: 'center', width: '100%' }}>
+              <Text style={{ color: colors.textMuted, textAlign: 'center' }}>
                 Redirection vers la connexion…
               </Text>
             </View>
           )}
 
-          <FieldLabel required>Nom complet</FieldLabel>
-          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nom Prénom" placeholderTextColor={colors.textMuted} accessibilityLabel="Nom complet (requis)" />
-
-          <FieldLabel required>Email</FieldLabel>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={(v) => { setEmail(v); setFoundClinics(null); setSelectedClinicId(''); }}
-            placeholder="votre@email.com"
-            placeholderTextColor={colors.textMuted}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            accessibilityLabel="Email (requis)"
-          />
-
-          <FieldLabel required>Rôle</FieldLabel>
+          {/* ── Choix du parcours ── */}
+          <FieldLabel required>Je suis</FieldLabel>
           <Dropdown
-            items={userRoles}
-            value={role}
-            onChange={(v) => setRole(v as UserRole)}
-            placeholder="Choisir un rôle"
+            items={PATH_OPTIONS}
+            value={path}
+            onChange={(v) => { setPath(v as Path); setEmail(''); setPendingAccount(null); setError(''); }}
+            placeholder="Choisir…"
           />
 
-          {/* Vétérinaire : créer ou rejoindre un établissement */}
-          {(role === 'veterinaire' || role === 'responsable') && (
-            <View style={styles.clinicSection}>
-              <FieldLabel required>Établissement</FieldLabel>
-              <Dropdown
-                items={[{ value: 'create', label: 'Créer un nouvel établissement' }, { value: 'join', label: 'Rejoindre un établissement existant' }]}
-                value={vetOption}
-                onChange={(v) => setVetOption(v as 'create' | 'join')}
-                placeholder="Créer ou rejoindre ?"
+          {/* ── Parcours Responsable ── */}
+          {path === 'responsable' && (
+            <>
+              <FieldLabel required>Nom complet</FieldLabel>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Nom Prénom"
+                placeholderTextColor={colors.textMuted}
+                accessibilityLabel="Nom complet (requis)"
               />
 
-              {vetOption === 'create' ? (
-                <>
-                  <FieldLabel required>Type d'établissement</FieldLabel>
-                  <Dropdown
-                    items={etablissementTypes}
-                    value={newClinicType}
-                    onChange={(v) => setNewClinicType(v as EtablissementType)}
-                    placeholder="Choisir un type"
-                  />
-                  <TextInput
-                    style={[styles.input, { marginTop: 8 }]}
-                    value={newClinicName}
-                    onChangeText={setNewClinicName}
-                    placeholder="Nom de votre établissement"
-                    placeholderTextColor={colors.textMuted}
-                  />
-                </>
-              ) : (
-                <Dropdown
-                  items={clinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
-                  value={selectedClinicId}
-                  onChange={setSelectedClinicId}
-                  placeholder="Choisir un établissement"
-                />
+              <FieldLabel required>Email</FieldLabel>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="votre@email.com"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                accessibilityLabel="Email (requis)"
+              />
+
+              <FieldLabel required>Type d'établissement</FieldLabel>
+              <Dropdown
+                items={etablissementTypes}
+                value={newClinicType}
+                onChange={(v) => setNewClinicType(v as EtablissementType)}
+                placeholder="Choisir un type"
+              />
+
+              <FieldLabel required>Nom de l'établissement</FieldLabel>
+              <TextInput
+                style={styles.input}
+                value={newClinicName}
+                onChangeText={setNewClinicName}
+                placeholder="Nom de votre établissement"
+                placeholderTextColor={colors.textMuted}
+              />
+            </>
+          )}
+
+          {/* ── Parcours Invitation ── */}
+          {path === 'invite' && (
+            <>
+              <FieldLabel required>Email</FieldLabel>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="votre@email.com"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                accessibilityLabel="Email (requis)"
+              />
+              {checkingEmail && <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 4 }} />}
+
+              {pendingAccount && (
+                <View style={styles.pendingBox}>
+                  <Text style={styles.pendingTitle}>Compte trouvé</Text>
+                  <Text style={styles.pendingInfo}>Nom : {pendingAccount.name}</Text>
+                  <Text style={[styles.pendingInfo, { marginTop: 8 }]}>
+                    Définissez votre mot de passe pour activer votre compte.
+                  </Text>
+                </View>
               )}
-            </View>
+
+              {email && !checkingEmail && !pendingAccount && /\S+@\S+\.\S+/.test(email) && (
+                <Text style={styles.notFoundHint}>
+                  Aucun compte trouvé pour cet email. Vérifiez avec votre responsable.
+                </Text>
+              )}
+            </>
           )}
 
-          {/* Assistant / Bénévole : doit rejoindre un établissement */}
-          {(role === 'assistant' || role === 'benevole') && (
-            <View style={styles.clinicSection}>
-              <FieldLabel required>Votre établissement</FieldLabel>
-              <Dropdown
-                items={clinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
-                value={selectedClinicId}
-                onChange={setSelectedClinicId}
-                placeholder="Choisir un établissement"
+          {/* ── Mot de passe — visible seulement si chemin choisi ── */}
+          {(path === 'responsable' || (path === 'invite' && pendingAccount)) && (
+            <>
+              <FieldLabel required>Mot de passe</FieldLabel>
+              <PasswordInput
+                value={password}
+                onChangeText={setPassword}
+                accessibilityLabel="Mot de passe (requis)"
               />
-            </View>
+
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleRegister}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>
+                    {path === 'invite' ? 'Activer mon compte' : 'Créer mon compte'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </>
           )}
-
-          {/* Client : établissement trouvé par email */}
-          {role === 'client' && foundClinics !== null && (
-            <View style={styles.clinicSection}>
-              <FieldLabel required>Votre établissement</FieldLabel>
-              <Dropdown
-                items={foundClinics.map((c) => ({ label: `${c.name} (${c.type})`, value: c.id }))}
-                value={selectedClinicId}
-                onChange={setSelectedClinicId}
-                placeholder="Choisir un établissement"
-              />
-            </View>
-          )}
-
-          <FieldLabel required>Mot de passe</FieldLabel>
-          <PasswordInput
-            value={password}
-            onChangeText={setPassword}
-            accessibilityLabel="Mot de passe (requis)"
-          />
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Créer mon compte</Text>
-            )}
-          </TouchableOpacity>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Déjà un compte ? </Text>
-            <Link href="/(auth)/login" style={styles.link}>
-              Se connecter
-            </Link>
+            <Link href="/(auth)/login" style={styles.link}>Se connecter</Link>
           </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
 
 function makeStyles(colors: any) {
   return StyleSheet.create({
@@ -296,7 +279,6 @@ function makeStyles(colors: any) {
       shadowOpacity: 0.08,
       shadowRadius: 8,
     },
-    label: { fontSize: 14, fontWeight: '500', color: colors.textPrimary, marginBottom: 6, marginTop: 12 },
     input: {
       borderWidth: 1,
       borderColor: colors.border,
@@ -306,9 +288,17 @@ function makeStyles(colors: any) {
       color: colors.textSecondary,
       backgroundColor: colors.background,
     },
-    clinicSection: { marginTop: 4 },
+    pendingBox: {
+      // backgroundColor: colors.Primary,
+      borderRadius: 10,
+      padding: 14,
+      marginTop: 12,
+      marginBottom: 4,
+    },
+    pendingTitle: { fontSize: 14, fontWeight: '700', color: colors.primary, marginBottom: 8 },
+    pendingInfo: { fontSize: 13, color: colors.textPrimary },
+    notFoundHint: { fontSize: 13, color: colors.textMuted, fontStyle: 'italic', marginTop: 6 },
     button: {
-      margin: 'auto',
       backgroundColor: colors.primary,
       borderRadius: 10,
       padding: 12,
