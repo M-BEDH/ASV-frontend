@@ -100,7 +100,7 @@ export default function RegisterScreen() {
               <Text style={{ fontSize: 16, fontWeight: '600', color: colors.success, marginBottom: 8 }}>
                 Compte créé avec succès !
               </Text>
-              <Text style={{ color: colors.textMuted, width: '100%' }}>
+              <Text style={{ color: colors.textMuted, width: '100%', textAlign: 'center' }}>
                 Redirection vers la connexion…
               </Text>
             </View>
