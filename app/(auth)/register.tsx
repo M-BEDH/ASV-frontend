@@ -70,7 +70,8 @@ export default function RegisterScreen() {
     setLoading(true);
 
     try {
-      await authApi.register({ email, password });
+      // Appel à l'API pour activer le compte 
+      await authApi.register({ email, password, name: pendingAccount.name, role: pendingAccount.role });
       setSuccess(true);
       setTimeout(() => router.replace('/(auth)/login'), 3000);
     } catch (e: any) {
@@ -95,11 +96,11 @@ export default function RegisterScreen() {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           {success && (
-            <View style={{ alignItems: 'center', padding: 16 }}>
+            <View style={{ alignItems: 'center', padding: 16}}>
               <Text style={{ fontSize: 16, fontWeight: '600', color: colors.success, marginBottom: 8 }}>
                 Compte créé avec succès !
               </Text>
-              <Text style={{ color: colors.textMuted, textAlign: 'center' }}>
+              <Text style={{ color: colors.textMuted, width: '100%' }}>
                 Redirection vers la connexion…
               </Text>
             </View>
