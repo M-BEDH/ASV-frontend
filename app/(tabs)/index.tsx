@@ -114,7 +114,7 @@ export default function AgendaScreen() {
         clinicName={user?.clinicName ?? undefined}
         clinicNameRight={canEditClinic ? (
           <TouchableOpacity onPress={() => { setClinicNameInput(user?.clinicName ?? ''); setClinicModalVisible(true); }}>
-            <MaterialCommunityIcons name="pencil-outline" size={14} color={colors.textMuted} />
+            <MaterialCommunityIcons name="pencil-outline" size={14} color={colors.textMuted} style={{ marginTop: 13, marginLeft: 5 }} />
           </TouchableOpacity>
         ) : undefined}
         right={
@@ -177,7 +177,7 @@ export default function AgendaScreen() {
               onPress={() => { setFilter('all'); setExpandedDay(null); }}
               activeOpacity={0.7}
             >
-              <Text style={[styles.statNumber, { color: '#052fec' }]}>{consultations.length}</Text>
+              <Text style={[styles.statNumber, { color: '#2c52fa' }]}>{consultations.length}</Text>
               <Text style={styles.statLabel}>À venir</Text>
             </TouchableOpacity>
           </View>
