@@ -5,6 +5,7 @@ export interface AuthUser {
   email: string;
   name: string;
   role: UserRole;
+  isVet?: boolean;
   // Staff (vétérinaire, responsable, assistant, bénévole)
   clinicId?: string | null;
   clinicName?: string | null;
@@ -38,6 +39,7 @@ export interface StaffUser {
   email: string;
   name: string;
   role: UserRole;
+  isVet?: boolean;
   pending: boolean;
   createdAt: string;
 }
