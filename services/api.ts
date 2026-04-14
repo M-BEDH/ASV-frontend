@@ -89,6 +89,7 @@ export const authApi = {
   },
 
   me: () => request<any>('/api/auth/me'),
+  // Vérifie si un compte est en attente d'activation pour l'email donné
   checkPending: (email: string) => request<{ pending: boolean; name?: string; role?: string }>(`/api/auth/check-pending?email=${encodeURIComponent(email)}`),
 
   logout: async () => {
