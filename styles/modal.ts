@@ -14,7 +14,7 @@ export function makeModalStyles(colors: any) {
     modal: {
       flex: 1,
       backgroundColor: colors.background,
-      maxWidth: Platform.OS === 'web' ? 680 : undefined,
+      maxWidth: Platform.OS === 'web' ? 1080 : undefined,
       alignSelf: Platform.OS === 'web' ? ('center' as const) : undefined,
       width: '100%' as const,
       marginTop: 60,
@@ -29,8 +29,21 @@ export function makeModalStyles(colors: any) {
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
-    title: { fontSize: 18, fontWeight: '700' as const, color: colors.textPrimary },
-    close: { fontSize: 22, color: colors.textMuted },
+    title: { 
+      fontSize: 18,
+      fontWeight: '700' as const,
+      color: colors.textPrimary 
+    },
+    close: {
+      fontSize: 22,
+      color: colors.primary,
+      backgroundColor: colors.border + '30',
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      textAlign: 'center' as const,
+      lineHeight: 38, // Centrage vertical du X
+    },
     body: { flex: 1, padding: 20 },
   };
 }
