@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
 import { makeCommonStyles } from '../../styles/common';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
-import { consultationsApi, animalsApi } from '../../services/api';
+import { consultationsApi, animalsApi, usersApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useCrud } from '../../hooks/useCrud';
@@ -13,7 +13,7 @@ import FieldLabel from '../../components/FieldLabel';
 import Dropdown from '../../components/Dropdown';
 import DateTimePickerInput from '../../components/DateTimePickerInput';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { Consultation, Animal } from '../../types';
+import type { Consultation, Animal, StaffUser } from '../../types';
 import { dateToDisplay, toIsoDatetime } from '../../utils/dateUtils';
 import { consultationMotifs } from '../../constants/consultationMotifs';
 
@@ -23,23 +23,33 @@ type FormData = {
   motif: string;
   compteRendu: string;
   traitements: string;
+  veterinaire: { value: any; label: any } | null;
 };
 
-const EMPTY_FORM: FormData = { animalId: '', dateConsultation: '', motif: '', compteRendu: '', traitements: '' };
+const EMPTY_FORM: FormData = { animalId: '', dateConsultation: '', motif: '', veterinaire: null as { value: any; label: any } | null, compteRendu: '', traitements: '' };
 
 export default function ConsultationsScreen() {
-  const { isVet, isReadOnly } = useAuth();
+  const { user, isVet, isReadOnly } = useAuth();
   const { colors } = useTheme();
   const { listPadding, isMobile } = useBreakpoint();
   const [animals, setAnimals] = useState<Animal[]>([]);
+  const [vets, setVets] = useState<StaffUser[]>([]);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
   const [pastOpen, setPastOpen] = useState(false);
+  
 
   const fetchAll = useCallback(async () => {
-    const [c, a] = await Promise.all([consultationsApi.list(), animalsApi.list()]);
+    const [c, a, u] = await Promise.all([consultationsApi.list(), animalsApi.list(), usersApi.list()]);
     setAnimals(a);
+    const selectable = (u as StaffUser[]).filter((u) => !!u.isVet);
+    const meIsSelectable = !!(user && (user.isVet ?? (user.role === 'veterinaire' || user.role === 'responsable')));
+    const meAlreadyListed = !!user && selectable.some((s) => s.id === user.id);
+    const vetsWithFallback = meIsSelectable && !meAlreadyListed
+      ? [...selectable, { id: user.id, email: user.email, name: user.name, role: user.role, isVet: true, pending: false, createdAt: '' }]
+      : selectable;
+    setVets(vetsWithFallback);
     return c;
-  }, []);
+  }, [user]);
 
   const {
     items: consultations,
@@ -71,6 +81,7 @@ export default function ConsultationsScreen() {
       animalId: f.animalId,
       dateConsultation: toIsoDatetime(f.dateConsultation),
       motif: f.motif,
+      veterinaireId: f.veterinaire?.value || null,
       compteRendu: f.compteRendu || null,
       traitements: f.traitements || null,
     }),
@@ -81,6 +92,7 @@ export default function ConsultationsScreen() {
       motif: c.motif,
       compteRendu: c.compteRendu ?? '',
       traitements: c.traitements ?? '',
+      veterinaire: c.veterinaire ? { value: c.veterinaire.id, label: c.veterinaire.name } : null,
     }),
     // Valide les données du formulaire avant l'envoi. Vérifie que les champs obligatoires sont remplis et que la date n'est pas passée.
     validate: (f) => {
@@ -195,7 +207,18 @@ export default function ConsultationsScreen() {
           placeholder="Choisir un motif"
         />
 
-        <FieldLabel>Compte-rendu</FieldLabel>
+        <FieldLabel required>Vétérinaire</FieldLabel>
+        <Dropdown
+          items={vets.map((v) => ({ value: v.id, label: v.name }))}
+          value={form.veterinaire?.value ?? ''}
+          onChange={(v) => setForm({ ...form, veterinaire: v ? { value: v, label: vets.find((u) => u.id === v)?.name ?? v } : null })}
+          placeholder={vets.length === 0 ? 'Aucun vétérinaire disponible' : 'Choisir un vétérinaire'}
+        />
+        {vets.length === 0 && (
+          <Text style={styles.emptyText}>Aucun vétérinaire disponible pour le moment.</Text>
+        )}
+
+        <FieldLabel>Compte-rendu / Observations</FieldLabel>
         <TextInput
           style={[styles.input, { height: 100 }]}
           value={form.compteRendu}
@@ -203,7 +226,7 @@ export default function ConsultationsScreen() {
           multiline
           placeholder="Résultats de l'examen..."
           placeholderTextColor={colors.textMuted}
-          accessibilityLabel="Compte-rendu"
+          accessibilityLabel="Compte-rendu / Observations"
         />
 
         <FieldLabel>Traitements</FieldLabel>

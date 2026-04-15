@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { makeModalStyles } from '../styles/modal';
 import { makeCommonStyles } from '../styles/common';
-import { animalsApi, consultationsApi } from '../services/api';
+import { animalsApi, consultationsApi, usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
@@ -21,7 +21,7 @@ import FieldLabel from './FieldLabel';
 import Dropdown from './Dropdown';
 import DateTimePickerInput from './DateTimePickerInput';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { Animal, Owner } from '../types';
+import type { Animal, Owner, StaffUser } from '../types';
 import { dateToDisplay, toIsoDatetime } from '../utils/dateUtils';
 import { consultationMotifs } from '../constants/consultationMotifs';
 
@@ -34,7 +34,7 @@ type Props = {
   onConsultationsChange: (c: any[]) => void;
 };
 
-const EMPTY_CONSULT_FORM = { dateConsultation: '', motif: '', compteRendu: '', traitements: '' };
+const EMPTY_CONSULT_FORM = { dateConsultation: '', motif: '', veterinaire: null as { value: any; label: any } | null, compteRendu: '', traitements: '' };
 
 export default function AnimalDetailModal({
   animal,
@@ -54,6 +54,29 @@ export default function AnimalDetailModal({
   const [consultSaving, setConsultSaving] = useState(false);
   const [consultError, setConsultError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<any | null>(null);
+  const [vets, setVets] = useState<StaffUser[]>([]);
+
+  // useEffect(() => {
+  //   if (animal) {
+  //     usersApi
+  //       .list()
+  //       // garde uniquement les users qui sont vétérinaires (isVet=true) 
+  //       .then((u) => setVets((u as StaffUser[]).filter((u) => !!u.isVet)));
+  //   }
+  // }, [animal?.id]);
+
+
+useEffect(() => {
+  if (!animal) return;
+
+  const loadVets = async () => {
+    const users = (await usersApi.list()) as StaffUser[];
+    // Garde uniquement les utilisateurs qui sont vétérinaires (isVet=true)
+    setVets(users.filter((u) => u.isVet));
+  };
+
+  loadVets();
+}, [animal?.id]);
 
   const openConsultModal = (consult?: any) => {
     if (consult) {
@@ -62,6 +85,7 @@ export default function AnimalDetailModal({
       setConsultForm({
         dateConsultation: dateToDisplay(d),
         motif: consult.motif,
+        veterinaire: consult.veterinaire ? { value: consult.veterinaire.id, label: consult.veterinaire.name } : null,
         compteRendu: consult.compteRendu ?? '',
         traitements: consult.traitements ?? '',
       });
@@ -86,6 +110,7 @@ export default function AnimalDetailModal({
         animalId: animal!.id,
         dateConsultation: isoDate,
         motif: consultForm.motif,
+        veterinaireId: consultForm.veterinaire?.value || null,
         compteRendu: consultForm.compteRendu || null,
         traitements: consultForm.traitements || null,
       };
@@ -262,6 +287,17 @@ export default function AnimalDetailModal({
           onChange={(v) => setConsultForm({ ...consultForm, motif: v })}
           placeholder="Choisir un motif"
         />
+
+        <FieldLabel required>Vétérinaire</FieldLabel>
+        <Dropdown
+          items={vets.map((v) => ({ value: v.id, label: v.name }))}
+          value={consultForm.veterinaire?.value ?? ''}
+          onChange={(v) => setConsultForm({ ...consultForm, veterinaire: v ? { value: v, label: vets.find((u) => u.id === v)?.name ?? v } : null })}
+          placeholder={vets.length === 0 ? 'Aucun vétérinaire disponible' : 'Choisir un vétérinaire'}
+        />
+        {vets.length === 0 && (
+          <Text style={styles.detailEmpty}>Aucun vétérinaire disponible pour le moment.</Text>
+        )}
 
         <FieldLabel>Compte-rendu</FieldLabel>
         <TextInput
