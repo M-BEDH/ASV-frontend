@@ -21,7 +21,7 @@ import type { Consultation } from '../../types';
 import { roleLabel, roleBgColor } from '../../utils/roles';
 
 export default function AgendaScreen() {
-  const { user, logout, isVet, refreshUser } = useAuth();
+  const { user, logout, isStaff, refreshUser } = useAuth();
   const { colors, theme } = useTheme();
   const { listPadding, isMobile } = useBreakpoint();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -162,7 +162,7 @@ export default function AgendaScreen() {
       >
         <View style={styles.list}>
         {/* Stats (vétérinaire/assistant uniquement) */}
-        {isVet && (
+        {isStaff && (
           <View style={styles.statsRow}>
             <TouchableOpacity
               style={[styles.statCard, filter === 'today' && styles.statCardActive]}
@@ -226,7 +226,7 @@ export default function AgendaScreen() {
                           <Text style={styles.consultEspece}>({c.animal?.espece ?? ''})</Text>
                         </Text>
                         <Text style={styles.consultMotif} numberOfLines={2}>{c.motif}</Text>
-                        {isVet && c.veterinaire && (
+                        {isStaff && c.veterinaire && (
                           <Text style={{ fontSize: 12, color: colors.primary }}>Dr {c.veterinaire.name}</Text>
                         )}
                       </View>
@@ -237,7 +237,7 @@ export default function AgendaScreen() {
                           <Text style={styles.consultEspece}>({c.animal?.espece ?? ''})</Text>
                         </Text>
                         <Text style={styles.consultMotif} numberOfLines={1}>{c.motif}</Text>
-                        {isVet && c.veterinaire && (
+                        {isStaff && c.veterinaire && (
                           <View style={styles.consultVet}>
                             <MaterialCommunityIcons name="stethoscope" size={13} color={colors.primary} />
                             <Text style={{ fontSize: 12, color: colors.primary }}> Dr {c.veterinaire.name}</Text>

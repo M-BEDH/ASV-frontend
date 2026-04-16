@@ -26,7 +26,7 @@ const EMPTY_FORM: FormData = { nom: '', prenom: '', adresse: '', telephone: '', 
 
 
 export default function ProprietairesScreen() {
-  const { user, isVet, isClient, isReadOnly } = useAuth();
+  const { user, isStaff, isClient } = useAuth();
   const { colors } = useTheme();
   const { listPadding, isMobile } = useBreakpoint();
   const [search, setSearch] = useState('');
@@ -102,7 +102,7 @@ export default function ProprietairesScreen() {
       <AppHeader
         title={isClient ? 'Mon profil' : 'Propriétaires'}
         right={
-          isVet && !isReadOnly ? (
+          isStaff ? (
             <TouchableOpacity style={styles.addBtn} onPress={() => openCreate()}>
               <Text style={styles.addBtnText}>+ Ajouter</Text>
             </TouchableOpacity>
@@ -110,7 +110,7 @@ export default function ProprietairesScreen() {
         }
       />
 
-      {isVet && (
+      {isStaff && (
         <SearchBar value={search} onChangeText={setSearch} isMobile={isMobile} />
       )}
 
@@ -141,12 +141,12 @@ export default function ProprietairesScreen() {
                   </View>
                 )}
               </View>
-              {!isReadOnly && (
+              {(isStaff || isClient) && (
                 <View style={styles.cardActions}>
                   <TouchableOpacity onPress={() => openEdit(o)} style={styles.editBtn}>
                     <Text style={styles.editBtnText}>✏️</Text>
                   </TouchableOpacity>
-                  {isVet && (
+                  {isStaff && (
                     <TouchableOpacity onPress={() => handleDelete(o)} style={styles.deleteBtn}>
                       <Text style={styles.deleteBtnText}>🗑️</Text>
                     </TouchableOpacity>
