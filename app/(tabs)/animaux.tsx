@@ -40,7 +40,7 @@ type FormData = {
 const EMPTY_FORM: FormData = { nom: '', espece: '', race: '', dateNaissance: '', remarques: '', proprietaireId: '' };
 
 export default function AnimauxScreen() {
-  const { isVet, isClient, isReadOnly } = useAuth();
+  const { isClient, canWrite } = useAuth();
   const { colors } = useTheme();
   const { listPadding, isMobile } = useBreakpoint();
   const [owners, setOwners] = useState<Owner[]>([]);
@@ -153,7 +153,7 @@ export default function AnimauxScreen() {
     <View style={styles.container}>
       <AppHeader
         title="Animaux"
-        right={isVet && !isReadOnly ? (
+        right={canWrite ? (
           <TouchableOpacity style={styles.addBtn} onPress={() => openCreate()}>
             <Text style={styles.addBtnText}>+ Ajouter</Text>
           </TouchableOpacity>
@@ -202,7 +202,7 @@ export default function AnimauxScreen() {
                 )}
                 {a.remarques ? <Text style={styles.cardRemark}>{a.remarques}</Text> : null}
               </TouchableOpacity>
-              {isVet && !isReadOnly && (
+              {canWrite && (
                 <View style={styles.cardActions}>
                   <TouchableOpacity onPress={() => openEdit(a)} style={styles.editBtn}>
                     <Text style={styles.editBtnText}>✏️</Text>

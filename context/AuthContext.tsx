@@ -8,10 +8,11 @@ interface AuthContextType {
   login: (email: string, password: string, clinicId?: string) => Promise<{ requiresClinicSelection: true; clinics: { id: string; name: string }[] } | void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  isVet: boolean;
+  isStaff: boolean;
   isClient: boolean;
   isReadOnly: boolean;
   isResponsable: boolean;
+  canWrite: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -57,14 +58,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   };
 
-  const isVet = user?.role === 'veterinaire' || user?.role === 'assistant' || user?.role === 'responsable';
+  const isStaff = user?.role === 'veterinaire' || user?.role === 'assistant' || user?.role === 'responsable';
   const isClient = user?.role === 'client';
-  // Bénévole en clinique = lecture seule ; bénévole en refuge/association = peut gérer les animaux                                                                                                  
-  const isReadOnly = user?.role === 'benevole' && !['refuge', 'association'].includes(user?.clinicType ?? '');   
+  // Bénévole en clinique = lecture seule ; bénévole en refuge/association = peut gérer les animaux
+  const isReadOnly = user?.role === 'benevole' && !['refuge', 'association'].includes(user?.clinicType ?? '');
   const isResponsable = user?.role === 'responsable';
+  // Peut créer / modifier / supprimer : vét/assistant/responsable OU bénévole en refuge/asso (jamais le client)
+  const canWrite = (isStaff || !isReadOnly) && !isClient;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, isVet, isClient, isReadOnly, isResponsable }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, isStaff, isClient, isReadOnly, isResponsable, canWrite }}>
       {children}
     </AuthContext.Provider>
   );
