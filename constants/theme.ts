@@ -36,8 +36,7 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     secondary: '#088318',
     danger: '#EF4444',
     warning: '#F59E0B',
-    background: '#e9e7e7c5',  
-    /* surface: '#e2840823', */
+    background: '#e9e7e7c5',
     surface: '#0880e223',
     border: '#0880e288',
     textPrimary: '#111827',
@@ -47,7 +46,7 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     roleAssistant: '#9e6af8',
     roleClient: '#10681b',
     roleResponsable: '#b94705',
-    roleBenevole: '#22c55e',
+    roleBenevole: '#1c799e',
     success: '#12aa0d',
   },
   dark: {
@@ -61,7 +60,6 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     background: '#111827',
     surface: '#1F2937',
     border: '#5c6b85',
-    // border: '#81aff8c0',
     textPrimary: '#F9FAFB',
     textSecondary: '#D1D5DB',
     textMuted: '#9CA3AF',
@@ -69,7 +67,7 @@ export const Colors: Record<'light' | 'dark', ThemeColors> = {
     roleAssistant: '#A78BFA',
     roleClient: '#048f5c',
     roleResponsable: '#b8561d',
-    roleBenevole: '#42cc75',
+    roleBenevole: '#1c799e',
     success: '#76f186',
   },
 };
