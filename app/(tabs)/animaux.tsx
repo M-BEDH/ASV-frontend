@@ -204,10 +204,10 @@ export default function AnimauxScreen() {
               </TouchableOpacity>
               {canWrite && (
                 <View style={styles.cardActions}>
-                  <TouchableOpacity onPress={() => openEdit(a)} style={styles.editBtn}>
+                  <TouchableOpacity onPress={() => openEdit(a)} style={styles.editBtn} accessibilityRole="button" accessibilityLabel="Modifier l'animal">
                     <Text style={styles.editBtnText}>✏️</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDelete(a)} style={styles.deleteBtn}>
+                  <TouchableOpacity onPress={() => handleDelete(a)} style={styles.deleteBtn} accessibilityRole="button" accessibilityLabel="Supprimer l'animal">
                     <Text style={styles.deleteBtnText}>🗑️</Text>
                   </TouchableOpacity>
                 </View>

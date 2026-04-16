@@ -116,7 +116,7 @@ export default function EquipeScreen() {
                 </Text>
               </View>
               <View style={styles.cardActions}>
-                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item)}>
+                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item)} accessibilityRole="button" accessibilityLabel="Supprimer le membre">
                   <Text style={styles.deleteBtnText}>🗑️</Text>
                 </TouchableOpacity>
               </View>

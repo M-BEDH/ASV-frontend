@@ -178,8 +178,8 @@ function ConsultCard({ c, isStaff, isMobile, colors, onEdit, onDelete, styles }:
       </View>
       {isStaff && (
         <View style={styles.cardActions}>
-          <TouchableOpacity onPress={() => onEdit(c)}><Text style={{ fontSize: 16 }}>✏️</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => onDelete(c)}><Text style={{ fontSize: 16 }}>🗑️</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => onEdit(c)} accessibilityRole="button" accessibilityLabel="Modifier la consultation"><Text style={{ fontSize: 16 }}>✏️</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => onDelete(c)} accessibilityRole="button" accessibilityLabel="Supprimer la consultation"><Text style={{ fontSize: 16 }}>🗑️</Text></TouchableOpacity>
         </View>
       )}
     </View>

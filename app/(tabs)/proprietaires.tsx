@@ -143,11 +143,11 @@ export default function ProprietairesScreen() {
               </View>
               {(isStaff || isClient) && (
                 <View style={styles.cardActions}>
-                  <TouchableOpacity onPress={() => openEdit(o)} style={styles.editBtn}>
+                  <TouchableOpacity onPress={() => openEdit(o)} style={styles.editBtn} accessibilityRole="button" accessibilityLabel="Modifier le propriétaire">
                     <Text style={styles.editBtnText}>✏️</Text>
                   </TouchableOpacity>
                   {isStaff && (
-                    <TouchableOpacity onPress={() => handleDelete(o)} style={styles.deleteBtn}>
+                    <TouchableOpacity onPress={() => handleDelete(o)} style={styles.deleteBtn} accessibilityRole="button" accessibilityLabel="Supprimer le propriétaire">
                       <Text style={styles.deleteBtnText}>🗑️</Text>
                     </TouchableOpacity>
                   )}

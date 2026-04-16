@@ -109,6 +109,8 @@ export default function LoginScreen() {
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Se connecter"
           >
             {loading ? (
               <ActivityIndicator color="#fff" />

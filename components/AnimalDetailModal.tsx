@@ -170,8 +170,8 @@ export default function AnimalDetailModal({
                     </View>
                     {isStaff && (
                       <View style={{ gap: 12, justifyContent: 'center' }}>
-                        <TouchableOpacity onPress={() => openConsultModal(c)}><Text style={{ fontSize: 16 }}>✏️</Text></TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDeleteConsultation(c)}><Text style={{ fontSize: 16 }}>🗑️</Text></TouchableOpacity>
+                        <TouchableOpacity onPress={() => openConsultModal(c)} accessibilityRole="button" accessibilityLabel="Modifier la consultation"><Text style={{ fontSize: 16 }}>✏️</Text></TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDeleteConsultation(c)} accessibilityRole="button" accessibilityLabel="Supprimer la consultation"><Text style={{ fontSize: 16 }}>🗑️</Text></TouchableOpacity>
                       </View>
                     )}
                   </View>

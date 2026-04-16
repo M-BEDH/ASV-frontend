@@ -151,6 +151,8 @@ export default function RegisterScreen() {
                 style={[styles.button, loading && styles.buttonDisabled]}
                 onPress={handleRegister}
                 disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel="Activer mon compte"
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
