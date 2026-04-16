@@ -1,29 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   Modal,
   ActivityIndicator,
 } from 'react-native';
 import { makeModalStyles } from '../styles/modal';
 import { makeCommonStyles } from '../styles/common';
-import { animalsApi, consultationsApi, usersApi } from '../services/api';
+import { animalsApi, consultationsApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
-import FormModal from './FormModal';
+import ConsultationFormModal from './ConsultationFormModal';
 import ConfirmModal from './ConfirmModal';
-import FieldLabel from './FieldLabel';
-import Dropdown from './Dropdown';
-import DateTimePickerInput from './DateTimePickerInput';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { Animal, Owner, StaffUser } from '../types';
-import { dateToDisplay, toIsoDatetime } from '../utils/dateUtils';
-import { consultationMotifs } from '../constants/consultationMotifs';
+import type { Animal, Owner } from '../types';
 
 type Props = {
   animal: Animal | null;
@@ -33,8 +27,6 @@ type Props = {
   onClose: () => void;
   onConsultationsChange: (c: any[]) => void;
 };
-
-const EMPTY_CONSULT_FORM = { dateConsultation: '', motif: '', veterinaire: null as { value: any; label: any } | null, compteRendu: '', traitements: '' };
 
 export default function AnimalDetailModal({
   animal,
@@ -48,85 +40,13 @@ export default function AnimalDetailModal({
   const { colors } = useTheme();
   const { showToast } = useToast();
 
-  const [consultModalVisible, setConsultModalVisible] = useState(false);
-  const [editConsultTarget, setEditConsultTarget] = useState<any | null>(null);
-  const [consultForm, setConsultForm] = useState(EMPTY_CONSULT_FORM);
-  const [consultSaving, setConsultSaving] = useState(false);
-  const [consultError, setConsultError] = useState('');
+  const [consultModalOpen, setConsultModalOpen] = useState(false);
+  const [editingConsultation, setEditingConsultation] = useState<any | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<any | null>(null);
-  const [vets, setVets] = useState<StaffUser[]>([]);
-
-  // useEffect(() => {
-  //   if (animal) {
-  //     usersApi
-  //       .list()
-  //       // garde uniquement les users qui sont vétérinaires (isVet=true) 
-  //       .then((u) => setVets((u as StaffUser[]).filter((u) => !!u.isVet)));
-  //   }
-  // }, [animal?.id]);
-
-
-useEffect(() => {
-  if (!animal) return;
-
-  const loadVets = async () => {
-    const users = (await usersApi.list()) as StaffUser[];
-    // Garde uniquement les utilisateurs qui sont vétérinaires (isVet=true)
-    setVets(users.filter((u) => u.isVet));
-  };
-
-  loadVets();
-}, [animal?.id]);
 
   const openConsultModal = (consult?: any) => {
-    if (consult) {
-      setEditConsultTarget(consult);
-      const d = new Date(consult.dateConsultation);
-      setConsultForm({
-        dateConsultation: dateToDisplay(d),
-        motif: consult.motif,
-        veterinaire: consult.veterinaire ? { value: consult.veterinaire.id, label: consult.veterinaire.name } : null,
-        compteRendu: consult.compteRendu ?? '',
-        traitements: consult.traitements ?? '',
-      });
-    } else {
-      setEditConsultTarget(null);
-      setConsultForm({ ...EMPTY_CONSULT_FORM, dateConsultation: dateToDisplay(new Date()) });
-    }
-    setConsultError('');
-    setConsultModalVisible(true);
-  };
-
-  const handleSaveConsultation = async () => {
-    if (!consultForm.motif || !consultForm.dateConsultation) {
-      setConsultError('La date et le motif sont obligatoires.');
-      return;
-    }
-    setConsultSaving(true);
-    setConsultError('');
-    try {
-      const isoDate = toIsoDatetime(consultForm.dateConsultation);
-      const payload = {
-        animalId: animal!.id,
-        dateConsultation: isoDate,
-        motif: consultForm.motif,
-        veterinaireId: consultForm.veterinaire?.value || null,
-        compteRendu: consultForm.compteRendu || null,
-        traitements: consultForm.traitements || null,
-      };
-      if (editConsultTarget) {
-        await consultationsApi.update(editConsultTarget.id, payload);
-      } else {
-        await consultationsApi.create(payload);
-      }
-      setConsultModalVisible(false);
-      showToast(editConsultTarget ? 'Consultation modifiée' : 'Consultation ajoutée');
-      onConsultationsChange(await animalsApi.getConsultations(animal!.id));
-    } catch (e: any) {
-      setConsultError(e.message || 'Erreur lors de la sauvegarde.');
-    } finally {
-      setConsultSaving(false);
-    }
+    setEditingConsultation(consult ?? null);
+    setConsultModalOpen(true);
   };
 
   const handleDeleteConsultation = (consult: any) => {
@@ -263,64 +183,15 @@ useEffect(() => {
       </Modal>
 
       {/* ── Formulaire consultation ── */}
-      <FormModal
-        visible={consultModalVisible}
-        title={editConsultTarget ? 'Modifier la consultation' : 'Nouvelle consultation'}
-        onClose={() => setConsultModalVisible(false)}
-        onSave={handleSaveConsultation}
-        saving={consultSaving}
-        error={consultError}
-      >
-        <FieldLabel>Animal</FieldLabel>
-        <Text style={[styles.input, { color: colors.textPrimary, paddingTop: 14 }]}>{animal?.nom} ({animal?.espece})</Text>
-
-        <FieldLabel required>Date et heure</FieldLabel>
-        <DateTimePickerInput
-          value={consultForm.dateConsultation}
-          onChange={(v) => setConsultForm({ ...consultForm, dateConsultation: v })}
-        />
-
-        <FieldLabel required>Motif</FieldLabel>
-        <Dropdown
-          items={consultationMotifs}
-          value={consultForm.motif}
-          onChange={(v) => setConsultForm({ ...consultForm, motif: v })}
-          placeholder="Choisir un motif"
-        />
-
-        <FieldLabel required>Vétérinaire</FieldLabel>
-        <Dropdown
-          items={vets.map((v) => ({ value: v.id, label: v.name }))}
-          value={consultForm.veterinaire?.value ?? ''}
-          onChange={(v) => setConsultForm({ ...consultForm, veterinaire: v ? { value: v, label: vets.find((u) => u.id === v)?.name ?? v } : null })}
-          placeholder={vets.length === 0 ? 'Aucun vétérinaire disponible' : 'Choisir un vétérinaire'}
-        />
-        {vets.length === 0 && (
-          <Text style={styles.detailEmpty}>Aucun vétérinaire disponible pour le moment.</Text>
-        )}
-
-        <FieldLabel>Compte-rendu</FieldLabel>
-        <TextInput
-          style={[styles.input, { height: 100 }]}
-          value={consultForm.compteRendu}
-          onChangeText={(v) => setConsultForm({ ...consultForm, compteRendu: v })}
-          multiline
-          placeholder="Résultats de l'examen..."
-          placeholderTextColor={colors.textMuted}
-          accessibilityLabel="Compte-rendu"
-        />
-
-        <FieldLabel>Traitements</FieldLabel>
-        <TextInput
-          style={[styles.input, { height: 80 }]}
-          value={consultForm.traitements}
-          onChangeText={(v) => setConsultForm({ ...consultForm, traitements: v })}
-          multiline
-          placeholder="Médicaments prescrits..."
-          placeholderTextColor={colors.textMuted}
-          accessibilityLabel="Traitements"
-        />
-      </FormModal>
+      <ConsultationFormModal
+        visible={consultModalOpen}
+        consultation={editingConsultation}
+        preselectedAnimal={animal}
+        onClose={() => setConsultModalOpen(false)}
+        onSaved={async () => {
+          if (animal) onConsultationsChange(await animalsApi.getConsultations(animal.id));
+        }}
+      />
 
       {/* ── Confirmation suppression consultation ── */}
       <ConfirmModal

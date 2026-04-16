@@ -1,55 +1,30 @@
-import { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
+import { useCallback, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { makeCommonStyles } from '../../styles/common';
 import { useBreakpoint } from '../../hooks/use-breakpoint';
-import { consultationsApi, animalsApi, usersApi } from '../../services/api';
+import { consultationsApi, animalsApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useCrud } from '../../hooks/useCrud';
 import AppHeader from '../../components/AppHeader';
 import ConfirmModal from '../../components/ConfirmModal';
-import FormModal from '../../components/FormModal';
-import FieldLabel from '../../components/FieldLabel';
-import Dropdown from '../../components/Dropdown';
-import DateTimePickerInput from '../../components/DateTimePickerInput';
+import ConsultationFormModal from '../../components/ConsultationFormModal';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { Consultation, Animal, StaffUser } from '../../types';
-import { dateToDisplay, toIsoDatetime } from '../../utils/dateUtils';
-import { consultationMotifs } from '../../constants/consultationMotifs';
-
-type FormData = {
-  animalId: string;
-  dateConsultation: string;
-  motif: string;
-  compteRendu: string;
-  traitements: string;
-  veterinaire: { value: any; label: any } | null;
-};
-
-const EMPTY_FORM: FormData = { animalId: '', dateConsultation: '', motif: '', veterinaire: null as { value: any; label: any } | null, compteRendu: '', traitements: '' };
+import type { Consultation, Animal } from '../../types';
 
 export default function ConsultationsScreen() {
-  const { user, isVet, isReadOnly } = useAuth();
+  const { isVet, isReadOnly } = useAuth();
   const { colors } = useTheme();
   const { listPadding, isMobile } = useBreakpoint();
   const [animals, setAnimals] = useState<Animal[]>([]);
-  const [vets, setVets] = useState<StaffUser[]>([]);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
   const [pastOpen, setPastOpen] = useState(false);
-  
 
   const fetchAll = useCallback(async () => {
-    const [c, a, u] = await Promise.all([consultationsApi.list(), animalsApi.list(), usersApi.list()]);
+    const [c, a] = await Promise.all([consultationsApi.list(), animalsApi.list()]);
     setAnimals(a);
-    const selectable = (u as StaffUser[]).filter((u) => !!u.isVet);
-    const meIsSelectable = !!(user && (user.isVet ?? (user.role === 'veterinaire' || user.role === 'responsable')));
-    const meAlreadyListed = !!user && selectable.some((s) => s.id === user.id);
-    const vetsWithFallback = meIsSelectable && !meAlreadyListed
-      ? [...selectable, { id: user.id, email: user.email, name: user.name, role: user.role, isVet: true, pending: false, createdAt: '' }]
-      : selectable;
-    setVets(vetsWithFallback);
     return c;
-  }, [user]);
+  }, []);
 
   const {
     items: consultations,
@@ -60,52 +35,23 @@ export default function ConsultationsScreen() {
     modalVisible,
     setModalVisible,
     editTarget,
-    form,
-    setForm,
-    saving,
-    error,
     confirm,
     hideConfirm,
     openCreate,
     openEdit,
-    handleSave,
     handleDelete,
-  } = useCrud<Consultation, FormData>({
+  } = useCrud<Consultation, Record<string, never>>({
     fetchAll,
     createItem: consultationsApi.create,
     updateItem: consultationsApi.update,
     deleteItem: consultationsApi.delete,
-    emptyForm: EMPTY_FORM,
-    // Convertit les données du formulaire en payload pour l'API. La date est convertie au format ISO attendu par le backend.
-    toPayload: (f) => ({
-      animalId: f.animalId,
-      dateConsultation: toIsoDatetime(f.dateConsultation),
-      motif: f.motif,
-      veterinaireId: f.veterinaire?.value || null,
-      compteRendu: f.compteRendu || null,
-      traitements: f.traitements || null,
-    }),
-    // Convertit une consultation en données de formulaire. La date est convertie au format local pour l'affichage.
-    itemToForm: (c) => ({
-      animalId: c.animal?.id ?? '',
-      dateConsultation: dateToDisplay(new Date(c.dateConsultation)),
-      motif: c.motif,
-      compteRendu: c.compteRendu ?? '',
-      traitements: c.traitements ?? '',
-      veterinaire: c.veterinaire ? { value: c.veterinaire.id, label: c.veterinaire.name } : null,
-    }),
-    // Valide les données du formulaire avant l'envoi. Vérifie que les champs obligatoires sont remplis et que la date n'est pas passée.
-    validate: (f) => {
-      if (!f.animalId || !f.dateConsultation || !f.motif) return 'Animal, date et motif sont obligatoires.';
-      const [datePart, timePart = '00:00'] = f.dateConsultation.split(' ');
-      const [d, m, y] = datePart.split('-');
-      const selected = new Date(`${y}-${m}-${d}T${timePart}`);
-      if (selected < new Date()) return 'La date de consultation est passée.';
-      return null;
-    },
+    emptyForm: {},
+    toPayload: () => ({}),
+    itemToForm: () => ({}),
+    validate: () => null,
     labels: {
-      created: 'Consultation créée avec succès',
-      updated: 'Consultation modifiée avec succès',
+      created: '',
+      updated: '',
       deleted: 'Consultation supprimée',
       deleteMessage: () => 'Supprimer cette consultation ?',
     },
@@ -127,7 +73,7 @@ export default function ConsultationsScreen() {
       <AppHeader
         title="Consultations"
         right={isVet && !isReadOnly ? (
-          <TouchableOpacity style={styles.addBtn} onPress={() => openCreate({ dateConsultation: dateToDisplay(new Date()) })}>
+          <TouchableOpacity style={styles.addBtn} onPress={() => openCreate()}>
             <Text style={styles.addBtnText}>+ Ajouter</Text>
           </TouchableOpacity>
         ) : undefined}
@@ -174,72 +120,13 @@ export default function ConsultationsScreen() {
         onCancel={hideConfirm}
       />
 
-      <FormModal
+      <ConsultationFormModal
         visible={modalVisible}
-        title={editTarget ? 'Modifier' : 'Nouvelle consultation'}
+        consultation={editTarget}
+        animals={animals}
         onClose={() => setModalVisible(false)}
-        onSave={handleSave}
-        saving={saving}
-        error={error}
-      >
-        <FieldLabel required>Animal</FieldLabel>
-        <Dropdown
-          items={animals.map((a) => ({
-            label: `${a.nom} (${a.espece})${a.proprietaire ? ` — ${a.proprietaire.prenom} ${a.proprietaire.nom}` : ''}`,
-            value: a.id,
-          }))}
-          value={form.animalId}
-          onChange={(v) => setForm({ ...form, animalId: v })}
-          placeholder="Choisir un animal"
-        />
-
-        <FieldLabel required>Date et heure</FieldLabel>
-        <DateTimePickerInput
-          value={form.dateConsultation}
-          onChange={(v) => setForm({ ...form, dateConsultation: v })}
-        />
-
-        <FieldLabel required>Motif</FieldLabel>
-        <Dropdown
-          items={consultationMotifs}
-          value={form.motif}
-          onChange={(v) => setForm({ ...form, motif: v })}
-          placeholder="Choisir un motif"
-        />
-
-        <FieldLabel required>Vétérinaire</FieldLabel>
-        <Dropdown
-          items={vets.map((v) => ({ value: v.id, label: v.name }))}
-          value={form.veterinaire?.value ?? ''}
-          onChange={(v) => setForm({ ...form, veterinaire: v ? { value: v, label: vets.find((u) => u.id === v)?.name ?? v } : null })}
-          placeholder={vets.length === 0 ? 'Aucun vétérinaire disponible' : 'Choisir un vétérinaire'}
-        />
-        {vets.length === 0 && (
-          <Text style={styles.emptyText}>Aucun vétérinaire disponible pour le moment.</Text>
-        )}
-
-        <FieldLabel>Compte-rendu / Observations</FieldLabel>
-        <TextInput
-          style={[styles.input, { height: 100 }]}
-          value={form.compteRendu}
-          onChangeText={(v) => setForm({ ...form, compteRendu: v })}
-          multiline
-          placeholder="Résultats de l'examen..."
-          placeholderTextColor={colors.textMuted}
-          accessibilityLabel="Compte-rendu / Observations"
-        />
-
-        <FieldLabel>Traitements</FieldLabel>
-        <TextInput
-          style={[styles.input, { height: 80 }]}
-          value={form.traitements}
-          onChangeText={(v) => setForm({ ...form, traitements: v })}
-          multiline
-          placeholder="Médicaments prescrits..."
-          placeholderTextColor={colors.textMuted}
-          accessibilityLabel="Traitements"
-        />
-      </FormModal>
+        onSaved={fetchData}
+      />
     </View>
   );
 }
