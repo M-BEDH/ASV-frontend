@@ -36,7 +36,7 @@ export default function AnimalDetailModal({
   onClose,
   onConsultationsChange,
 }: Props) {
-  const { isVet } = useAuth();
+  const { isStaff } = useAuth();
   const { colors } = useTheme();
   const { showToast } = useToast();
 
@@ -145,7 +145,7 @@ export default function AnimalDetailModal({
                   <MaterialCommunityIcons name="stethoscope" size={18} color={colors.primary} />
                   <Text style={styles.detailSectionTitle}>Consultations</Text>
                 </View>
-                {isVet && (
+                {isStaff && (
                   <TouchableOpacity style={styles.addConsultBtn} onPress={() => openConsultModal()}>
                     <Text style={styles.addConsultBtnText}>+ Ajouter</Text>
                   </TouchableOpacity>
@@ -168,7 +168,7 @@ export default function AnimalDetailModal({
                       {c.traitements ? <Text style={styles.consultationField}>{c.traitements}</Text> : null}
                       {c.veterinaire && <Text style={styles.consultationVet}>Dr {c.veterinaire.name}</Text>}
                     </View>
-                    {isVet && (
+                    {isStaff && (
                       <View style={{ gap: 12, justifyContent: 'center' }}>
                         <TouchableOpacity onPress={() => openConsultModal(c)}><Text style={{ fontSize: 16 }}>✏️</Text></TouchableOpacity>
                         <TouchableOpacity onPress={() => handleDeleteConsultation(c)}><Text style={{ fontSize: 16 }}>🗑️</Text></TouchableOpacity>

@@ -13,7 +13,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { Consultation, Animal } from '../../types';
 
 export default function ConsultationsScreen() {
-  const { isVet, isReadOnly } = useAuth();
+  const { isStaff, isReadOnly } = useAuth();
   const { colors } = useTheme();
   const { listPadding, isMobile } = useBreakpoint();
   const [animals, setAnimals] = useState<Animal[]>([]);
@@ -72,7 +72,7 @@ export default function ConsultationsScreen() {
     <View style={styles.container}>
       <AppHeader
         title="Consultations"
-        right={isVet && !isReadOnly ? (
+        right={isStaff && !isReadOnly ? (
           <TouchableOpacity style={styles.addBtn} onPress={() => openCreate()}>
             <Text style={styles.addBtnText}>+ Ajouter</Text>
           </TouchableOpacity>
@@ -94,7 +94,7 @@ export default function ConsultationsScreen() {
             {upcomingOpen && (upcoming.length === 0 ? (
               <Text style={styles.emptyText}>Aucune consultation à venir</Text>
             ) : (
-              upcoming.map((c) => <ConsultCard key={c.id} c={c} isVet={isVet && !isReadOnly} isMobile={isMobile} colors={colors} onEdit={openEdit} onDelete={handleDelete} styles={styles} />)
+              upcoming.map((c) => <ConsultCard key={c.id} c={c} isStaff={isStaff && !isReadOnly} isMobile={isMobile} colors={colors} onEdit={openEdit} onDelete={handleDelete} styles={styles} />)
             ))}
 
             <TouchableOpacity style={[styles.sectionHeader, { marginTop: 12 }]} onPress={() => setPastOpen(!pastOpen)} activeOpacity={0.7}>
@@ -104,7 +104,7 @@ export default function ConsultationsScreen() {
             {pastOpen && (past.length === 0 ? (
               <Text style={styles.emptyText}>Aucune consultation passée</Text>
             ) : (
-              past.map((c) => <ConsultCard key={c.id} c={c} isVet={isVet && !isReadOnly} isMobile={isMobile} colors={colors} onEdit={openEdit} onDelete={handleDelete} styles={styles} />)
+              past.map((c) => <ConsultCard key={c.id} c={c} isStaff={isStaff && !isReadOnly} isMobile={isMobile} colors={colors} onEdit={openEdit} onDelete={handleDelete} styles={styles} />)
             ))}
           </>
         )}
@@ -131,8 +131,8 @@ export default function ConsultationsScreen() {
   );
 }
 
-function ConsultCard({ c, isVet, isMobile, colors, onEdit, onDelete, styles }: {
-  c: Consultation; isVet: boolean; isMobile: boolean; colors: any; onEdit: (c: Consultation) => void; onDelete: (c: Consultation) => void; styles: any;
+function ConsultCard({ c, isStaff, isMobile, colors, onEdit, onDelete, styles }: {
+  c: Consultation; isStaff: boolean; isMobile: boolean; colors: any; onEdit: (c: Consultation) => void; onDelete: (c: Consultation) => void; styles: any;
 }) {
   const fmt = (iso: string) => {
     const d = new Date(iso);
@@ -176,7 +176,7 @@ function ConsultCard({ c, isVet, isMobile, colors, onEdit, onDelete, styles }: {
           </View>
         )}
       </View>
-      {isVet && (
+      {isStaff && (
         <View style={styles.cardActions}>
           <TouchableOpacity onPress={() => onEdit(c)}><Text style={{ fontSize: 16 }}>✏️</Text></TouchableOpacity>
           <TouchableOpacity onPress={() => onDelete(c)}><Text style={{ fontSize: 16 }}>🗑️</Text></TouchableOpacity>
