@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { Colors } from '../constants/theme';
+import { Colors } from '../styles/theme';
 
 export default function Index() {
   const { user, loading } = useAuth();
