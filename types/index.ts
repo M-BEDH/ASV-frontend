@@ -1,5 +1,10 @@
 export type UserRole = 'client' | 'veterinaire' | 'assistant' | 'benevole' | 'responsable';
 
+export interface PendingAccount {
+  name: string;
+  role: UserRole;
+}
+
 export interface AuthUser {
   id: string;
   email: string;

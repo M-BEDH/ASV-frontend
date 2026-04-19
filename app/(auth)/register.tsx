@@ -17,8 +17,7 @@ import { authApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import FieldLabel from '../../components/FieldLabel';
 import PasswordInput from '../../components/PasswordInput';
-
-type PendingAccount = { name: string; role: string };
+import type { PendingAccount, UserRole } from '../../types';
 
 export default function RegisterScreen() {
   const { colors } = useTheme();
@@ -32,25 +31,36 @@ export default function RegisterScreen() {
 
   // Debounce sur l'email — vérifie l'existence d'un pré-compte
   useEffect(() => {
+    // Reset à chaque changement d'email
     setPendingAccount(null);
     if (!/\S+@\S+\.\S+/.test(email)) return;
 
+    // Vérifie l'existence d'un compte en attente pour cet email
     setCheckingEmail(true);
+    // Debounce 500ms — attend la fin de la saisie avant d'appeler l'API
     const timer = setTimeout(async () => {
       try {
         const result = await authApi.checkPending(email);
+        // Si un pré-compte existe, on le stocke pour afficher les infos et le formulaire de mot de passe
         setPendingAccount(result.pending
-          ? { name: result.name!, role: result.role! }
+          // ! = assertion TypeScript uniquement, pas de vérification à l'exécution
+          ? { name: result.name!, role: result.role! as UserRole }
           : null
         );
       } catch {
+        // En cas d'erreur (ex: réseau), on considère qu'aucun pré-compte n'existe pour éviter de bloquer l'utilisateur
         setPendingAccount(null);
       } finally {
+        // Quel que soit le résultat, on arrête l'état de vérification
         setCheckingEmail(false);
       }
+      // Note : le backend doit renvoyer une structure claire pour différencier "pas de pré-compte" et "erreur de serveur". 
+      // Ici, on suppose que toute erreur signifie "pas de pré-compte", ce qui est plus permissif pour l'utilisateur.
     }, 500);
 
+    // Nettoyage du timer à chaque changement d'email ou à la destruction du composant
     return () => { clearTimeout(timer); setCheckingEmail(false); };
+    
   }, [email]);
 
   const handleRegister = async () => {
