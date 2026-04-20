@@ -1,0 +1,36 @@
+name: CI Frontend
+
+# Déclenchement à chaque push ou pull request sur master
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  frontend-lint-build:
+    name: Lint & Build Expo
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # Installe Node.js 20 et met en cache node_modules entre les runs
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # npm ci respecte exactement le package-lock.json (plus strict que npm install)
+      - name: Installer les dépendances npm
+        run: npm ci
+
+      # Vérifie les règles ESLint et TypeScript définies dans le projet
+      - name: Lint
+        run: npm run lint
+
+      # Compile et exporte l'app en version web statique.
+      # Un échec ici bloque le merge — le build doit toujours passer.
+      - name: Build Expo (export web statique)
+        run: npx expo export --platform web
