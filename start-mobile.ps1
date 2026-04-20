@@ -1,4 +1,5 @@
 # Detecte automatiquement l'IP WiFi active (exclut Docker et loopback)
+# npx kill-port 8081 8083 (si besoin de libérer les ports)
 $ip = Get-NetIPAddress -AddressFamily IPv4 |
     Where-Object { $_.IPAddress -notmatch '^(172\.|10\.0\.|127\.)' -and $_.PrefixOrigin -eq 'Dhcp' } |
     Select-Object -First 1 -ExpandProperty IPAddress
@@ -14,7 +15,7 @@ if ($choix -eq "2") {
     Start-Process powershell -ArgumentList "ngrok http 8080" -WindowStyle Normal
     
     Write-Host "Attente que le tunnel demarre..."
-    Start-Sleep -Seconds 8
+    Start-Sleep -Seconds 15
 
     # Recupère l'URL ngrok via l'API locale
     $tunnels = (Invoke-RestMethod http://localhost:4040/api/tunnels).tunnels
