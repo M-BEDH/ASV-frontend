@@ -6,5 +6,7 @@
     "paths": {
       "@/*": ["./*"]
     }
-  }
+  },
+  // Les fichiers de test sont exclus : @types/jest n'est pas installé et tsc ne doit pas les vérifier (c'est le rôle de Jest)
+  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx"]
 }
