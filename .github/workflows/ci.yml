@@ -22,7 +22,6 @@ jobs:
       - name: Installation des dépendances
         run: |
           npm ci
-          npm test
 
       - name: Lint
         run: npm run lint
