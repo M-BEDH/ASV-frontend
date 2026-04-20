@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.melbedh.asvvet"
     },
     "web": {
       "favicon": "./assets/favicon_asv.png",
@@ -29,6 +30,12 @@
       "expo-router",
       "expo-secure-store",
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1a8a4dbc-df46-44b1-8e32-b3b83412b6e6"
+      }
+    }
   }
 }
