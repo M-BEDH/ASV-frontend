@@ -26,9 +26,10 @@ jobs:
       - name: Installer les dépendances npm
         run: npm ci
 
-      # Vérifie les règles ESLint et TypeScript définies dans le projet
-      - name: Lint
-        run: npm run lint
+      # Vérifie les types TypeScript sans produire de fichiers de sortie
+      # (ESLint n'est pas installé dans ce projet — tsc couvre la vérification statique)
+      - name: Vérification TypeScript
+        run: npx tsc --noEmit
 
       # Compile et exporte l'app en version web statique.
       # Un échec ici bloque le merge — le build doit toujours passer.
