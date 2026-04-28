@@ -15,7 +15,7 @@ if ($choix -eq "2") {
     Start-Process powershell -ArgumentList "ngrok http 8080" -WindowStyle Normal
     
     Write-Host "Attente que le tunnel demarre..."
-    Start-Sleep -Seconds 15
+    Start-Sleep -Seconds 30
 
     # Recupère l'URL ngrok via l'API locale
     $tunnels = (Invoke-RestMethod http://localhost:4040/api/tunnels).tunnels
