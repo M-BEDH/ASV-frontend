@@ -64,7 +64,7 @@ mobile-web/
 │       ├── animaux.tsx          # liste et gestion des animaux
 │       ├── consultations.tsx    # consultations médicales
 │       ├── proprietaires.tsx    # gestion des propriétaires
-│       ├── equipe.tsx           # gestion du staff (admin+)
+│       ├── equipe.tsx           # gestion du staff (responsable+)
 │       └── mentionLegales.tsx
 ├── components/                  # composants réutilisables
 │   ├── AppHeader.tsx
@@ -109,8 +109,9 @@ L'interface s'adapte au rôle de l'utilisateur connecté (fourni par le JWT) :
 | Rôle | Accès |
 |---|---|
 | `super_admin` | Toutes les cliniques, tous les utilisateurs |
-| `admin` | Gestion complète de sa clinique |
+| `responsable` | Gestion complète de sa clinique |
 | `veterinaire` | Animaux et consultations de sa clinique |
+| `assistant` | Même accès que `veterinaire` |
 | `benevole` | Lecture/écriture dans refuges et associations |
 | `client` | Ses propres animaux et leur historique médical |
 
