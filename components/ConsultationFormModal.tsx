@@ -100,7 +100,8 @@ export default function ConsultationFormModal({
     }
     const [datePart, timePart = '00:00'] = form.dateConsultation.split(' ');
     const [d, m, y] = datePart.split('-');
-    if (new Date(`${y}-${m}-${d}T${timePart}`) < new Date()) {
+    // uniquement pour la création , pas en edit si compte rendu vet généré plus tard
+    if (!consultation && new Date(`${y}-${m}-${d}T${timePart}`) < new Date()) {
       setError('La date de consultation est passée.');
       return;
     }
