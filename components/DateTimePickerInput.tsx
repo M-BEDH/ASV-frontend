@@ -17,7 +17,8 @@ export default function DateTimePickerInput({ value, onChange, dateOnly = false 
 
   if (Platform.OS === 'web') {
     if (dateOnly) {
-      const webValue = value ? (() => { const [d, m, y] = value.split('-'); return `${y}-${m}-${d}`; })() : '';
+      const webValue = value ? (() => { const [d, m, y] = value.split('-'); return `${y}-${m}-${d}`; })() : ''; 
+      // converti pour le navigateur qui attend le format yyyy/mm/dd
       return (
         <input
           type="date"
@@ -38,7 +39,7 @@ export default function DateTimePickerInput({ value, onChange, dateOnly = false 
     }
     return (
       <input
-        type="datetime-local"
+        type="datetime-local" // toDatetimeLocal et fromDatetimeLocal font la conversion (..utils/dateUtils) 
         value={toDatetimeLocal(value)}
         onChange={(e) => onChange(fromDatetimeLocal(e.target.value))}
         style={{
@@ -56,12 +57,12 @@ export default function DateTimePickerInput({ value, onChange, dateOnly = false 
   return (
     <>
       <TouchableOpacity
-        onPress={() => setMode('date')}
+        onPress={() => setMode('date')}  // RNDateTimePicker (calendrier)
         style={[styles.trigger, { borderColor: colors.border, backgroundColor: colors.surface }]}
         activeOpacity={0.7}
       >
-        <Text style={{ fontSize: 15, color: value ? colors.textPrimary : colors.textMuted, flex: 1 }}>
-          {value || (dateOnly ? 'Choisir une date' : 'Choisir une date et heure')}
+        <Text style={{ fontSize: 15, color: value ? colors.textPrimary : colors.textMuted, flex: 1 }}> 
+          {value || (dateOnly ? 'Choisir une date' : 'Choisir une date et heure')} 
         </Text>
         <Text style={{ fontSize: 16 }}>📅</Text>
       </TouchableOpacity>
@@ -81,9 +82,9 @@ export default function DateTimePickerInput({ value, onChange, dateOnly = false 
                 onChange(`${pad(next.getDate())}-${pad(next.getMonth() + 1)}-${next.getFullYear()}`);
                 setMode(null);
               } else {
-                next.setHours(currentDate.getHours(), currentDate.getMinutes());
+                next.setHours(currentDate.getHours(), currentDate.getMinutes()); // garde l'heure
                 onChange(dateToDisplay(next));
-                setMode('time');
+                setMode('time'); // RNDateTimePicker (horloge)
               }
             } else {
               const next = new Date(currentDate);

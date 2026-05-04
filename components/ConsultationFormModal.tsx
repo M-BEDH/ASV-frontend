@@ -48,9 +48,9 @@ export default function ConsultationFormModal({
   onClose,
   onSaved,
 }: Props) {
-  const { user } = useAuth();
-  const { colors } = useTheme();
-  const { showToast } = useToast();
+  const { user } = useAuth(); // AuthContext
+  const { colors } = useTheme(); // ThemeContext
+  const { showToast } = useToast(); // ToastContext
 
   const [form, setForm] = useState<ConsultForm>(EMPTY_FORM);
   const [vets, setVets] = useState<StaffUser[]>([]);

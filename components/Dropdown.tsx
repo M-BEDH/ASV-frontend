@@ -48,7 +48,7 @@ export default function Dropdown({ items, value, onChange, placeholder = 'Sélec
     );
   }
 
-  // Mobile : menu déroulant custom
+  // Mobile : menu déroulant 
   return (
     <>
       <TouchableOpacity

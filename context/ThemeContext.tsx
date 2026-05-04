@@ -17,10 +17,11 @@ const STORAGE_KEY = '@asv_theme';
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const systemScheme = useColorScheme();
-  const [theme, setThemeState] = useState<ThemeMode>(systemScheme === 'dark' ? 'dark' : 'light');
-
-  useEffect(() => {
+  // children — tout ce qui est imbriqué dedans dans _layout.tsx
+  const systemScheme = useColorScheme(); 
+  const [theme, setThemeState] = useState<ThemeMode>(systemScheme === 'dark' ? 'dark' : 'light'); //Initialise le state theme avec le thème système
+                                
+  useEffect(() => { // S'exécute une seule fois après le premier rendu
     AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
       const mode = stored === 'light' || stored === 'dark' ? stored : theme;
       setThemeState(mode);

@@ -14,3 +14,5 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+/* un Provider ne peut consommer que les contexts de ses parents */

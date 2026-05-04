@@ -38,7 +38,7 @@ export default function TabsLayout() {
   const { isMobile } = useBreakpoint();
 
   if (loading) return null;
-  if (!user) return <Redirect href="/(auth)/login" />;
+  if (!user) return <Redirect href="/(auth)/login" />; // pas connecté → login 
 
   return (
     <Tabs
