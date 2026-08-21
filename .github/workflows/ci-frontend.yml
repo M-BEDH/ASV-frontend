@@ -31,6 +31,10 @@ jobs:
       - name: Vérification TypeScript
         run: npx tsc --noEmit
 
+      # Lance la suite Jest (utilitaires + composants)
+      - name: Lancer les tests Jest
+        run: npx jest --ci --no-coverage
+
       # Compile et exporte l'app en version web statique.
       # Un échec ici bloque le merge — le build doit toujours passer.
       - name: Build Expo (export web statique)
