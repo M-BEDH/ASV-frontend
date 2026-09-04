@@ -76,7 +76,7 @@ export default function MentionLegalesScreen() {
 				</View>
 				<Text style={[styles.h1, { fontSize: isMobile ? 24 : 32 }]}>Mentions légales et RGPD</Text>
 				<Text style={[styles.headerSub, { fontSize: isMobile ? 16 : 24 }]}>
-					Application de Suivi Vétérinaire - ASV - Dernière mise à jour : avril 2026
+					Application de Suivi Vétérinaire - ASV - Dernière mise à jour : septembre 2026
 				</Text>
 			</View>
 
@@ -289,27 +289,29 @@ export default function MentionLegalesScreen() {
 				</View>
 
 				<View style={styles.section}>
-					<SectionHeader num="7" title="Cookies" />
+					<SectionHeader num="7" title="Cookies et stockage local" />
 					<Text style={styles.p}>
-						L'application ASV utilise des cookies et technologies similaires. Conformément à la
-						recommandation CNIL du 17 septembre 2020, votre consentement est recueilli avant tout
-						dépôt de cookie non strictement nécessaire.
+						L'application mobile/web ASV n'utilise pas de cookie pour l'authentification : le
+						jeton de connexion (JWT) est conservé localement sur l'appareil de l'utilisateur (
+						<Text style={styles.bold}>expo-secure-store</Text> sur mobile, <Text style={styles.bold}>
+						AsyncStorage</Text> sur le web), jamais sous forme de cookie. Seule l'interface
+						d'administration (<Text style={styles.bold}>/admin</Text>, réservée au
+						super-administrateur) repose sur un cookie de session classique.
 					</Text>
 
 					<ScrollView horizontal showsHorizontalScrollIndicator style={styles.tableScroll}>
 						<View>
 							<View style={[styles.tableRow, styles.tableHead]}>
-								<Text style={[styles.th, { width: 120 }]}>Cookie</Text>
+								<Text style={[styles.th, { width: 120 }]}>Nom</Text>
 								<Text style={[styles.th, { width: 110 }]}>Type</Text>
 								<Text style={[styles.th, { width: 180 }]}>Finalité</Text>
 								<Text style={[styles.th, { width: 100 }]}>Durée</Text>
 								<Text style={[styles.th, { width: 140 }]}>Consentement requis</Text>
 							</View>
 							{[
-								['PHPSESSID', 'Session', 'Gestion de session Symfony', 'Session', 'Non (essentiel)'],
-								['jwt_token', 'Fonctionnel', 'Authentification API (JWT)', '1 heure', 'Non (essentiel)'],
-								['refresh_token', 'Fonctionnel', 'Renouvellement du JWT', '30 jours', 'Non (essentiel)'],
-								['[analytics_*]', 'Analytique', '[Mesure d\'audience]', '[13 mois]', 'Oui'],
+								['PHPSESSID', 'Cookie de session', 'Session de connexion à /admin uniquement', 'Session', 'Non (essentiel)'],
+								['Jeton JWT', 'Stockage local (secure-store / AsyncStorage)', 'Authentification API — pas un cookie', '8 heures', 'Non (essentiel)'],
+								['[analytics_*]', 'Cookie analytique', '[Mesure d\'audience]', '[13 mois]', 'Oui'],
 							].map((row) => (
 								<View key={row[0]} style={styles.tableRow}>
 									<Text style={[styles.tdMono, { width: 120 }]}>{row[0]}</Text>
@@ -323,8 +325,11 @@ export default function MentionLegalesScreen() {
 					</ScrollView>
 
 					<Text style={styles.p}>
-						Vous pouvez à tout moment modifier vos préférences cookies via le gestionnaire de
-						consentement accessible en bas de l'application, ou en configurant votre navigateur.
+						Aucun gestionnaire de consentement n'est actuellement implémenté dans l'application —
+						la ligne "analytics" ci-dessus est un placeholder pour une évolution future, pas une
+						fonctionnalité existante. En cas d'ajout réel de mesure d'audience, un recueil de
+						consentement conforme à la recommandation CNIL du 17 septembre 2020 sera mis en place
+						avant toute activation.
 					</Text>
 				</View>
 
