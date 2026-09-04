@@ -94,8 +94,8 @@ export default function ConsultationFormModal({
 
   const handleSave = async () => {
     const animalId = preselectedAnimal ? preselectedAnimal.id : form.animalId;
-    if (!animalId || !form.dateConsultation || !form.motif) {
-      setError('Animal, date et motif sont obligatoires.');
+    if (!animalId || !form.dateConsultation || !form.motif || !form.veterinaire) {
+      setError('Animal, date, motif et vétérinaire sont obligatoires.');
       return;
     }
     const [datePart, timePart = '00:00'] = form.dateConsultation.split(' ');
