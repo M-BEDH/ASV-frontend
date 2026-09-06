@@ -11,6 +11,7 @@ export type ConfirmConfig = {
 };
 
 // Options à fournir par chaque écran qui utilise ce hook
+// TItem extends { id: string } : le hook a besoin d'un id (ex. editTarget.id dans handleSave) quel que soit le type concret fourni
 type CrudOptions<TItem extends { id: string }, TForm> = {
   fetchAll: () => Promise<TItem[]>;           // charge la liste depuis l'API
   createItem: (payload: any) => Promise<any>; // crée un élément
@@ -87,6 +88,7 @@ export function useCrud<TItem extends { id: string }, TForm>(opts: CrudOptions<T
     setError('');
     try {
       const payload = opts.toPayload(form);
+      // editTarget non-null = mode édition (défini par openEdit) → update ; sinon mode création → create
       if (editTarget) {
         await opts.updateItem(editTarget.id, payload);
         setModalVisible(false);
