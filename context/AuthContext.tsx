@@ -58,6 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   };
 
+  //  user?.role  --> optional chaining (chaînage optionnel) de JS/TS. si user est null ou undefined, on s'arrête là et renvoie undefined au lieu de planter 
+  // sinon, on continue et on lit .role"
   const isStaff = user?.role === 'veterinaire' || user?.role === 'assistant' || user?.role === 'responsable';
   const isClient = user?.role === 'client';
   // Bénévole en clinique = lecture seule ; bénévole en refuge/association = peut gérer les animaux
